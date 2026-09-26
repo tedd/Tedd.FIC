@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - site/**
+      - js/**
       - tests/**
       - tools/build_site.py
       - .github/workflows/pages.yml

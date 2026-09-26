@@ -43,10 +43,10 @@ For untrusted files, use `Fic.TryGetInfo` to inspect dimensions before allocatio
 
 ### JavaScript
 
-The dependency-free [JavaScript module](site/tfic.js) works in browsers and Node.js. It accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output.
+The official dependency-free [JavaScript module](js/tfic.js) works in browsers and Node.js. It accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output.
 
 ```js
-import { encode, decode, getInfo } from './tfic.js';
+import { encode, decode, getInfo } from './js/tfic.js';
 
 const file = encode(rgba, width, height, 4); // Uint8Array of RGBA pixels
 const info = getInfo(file);                   // dimensions before decoding

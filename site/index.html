@@ -98,7 +98,7 @@ const { pixels, width: w, height: h, channels } = decode(file);
 // Load a .tfic file from a URL:
 const response = await fetch('image.tfic');
 const loaded = decode(new Uint8Array(await response.arrayBuffer()));</code></pre></div>
-      <p class="caption">The package currently targets .NET 11 preview. The JavaScript decoder accepts Fast and Compact streams from .NET and verifies CRC-32C. The JavaScript encoder writes interoperable Fast-tier literal strips; its output may be larger than the .NET encoder’s optimized output. <a href="https://github.com/tedd/Tedd.FIC/blob/main/site/tfic.js">View the JavaScript module →</a></p>
+      <p class="caption">The package currently targets .NET 11 preview. The JavaScript decoder accepts Fast and Compact streams from .NET and verifies CRC-32C. The JavaScript encoder writes interoperable Fast-tier literal strips; its output may be larger than the .NET encoder’s optimized output. <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/tfic.js">View the JavaScript module →</a></p>
     </section>
 
     <section class="section convert" id="convert">

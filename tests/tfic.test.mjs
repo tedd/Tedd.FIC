@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { decode, encode, getInfo } from '../site/tfic.js';
+import { decode, encode, getInfo } from '../js/tfic.js';
 
 const directory = mkdtempSync(join(tmpdir(), 'tfic-js-'));
 const project = new URL('./Interop/Interop.csproj', import.meta.url).pathname.replace(/^\/(?=[A-Za-z]:)/, '');

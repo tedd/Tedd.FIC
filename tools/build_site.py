@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "site"
 OUTPUT = ROOT / "site-dist"
+OFFICIAL_CODEC = ROOT / "js" / "tfic.js"
 
 
 def replace_once(content: str, old: str, new: str) -> str:
@@ -33,7 +34,9 @@ def main() -> None:
     OUTPUT.mkdir()
 
     data_name = write_fingerprinted("benchmark-data.json", (SOURCE / "benchmark-data.json").read_bytes())
-    codec = (SOURCE / "tfic.js").read_bytes()
+    codec = OFFICIAL_CODEC.read_bytes()
+    if (SOURCE / "tfic.js").read_bytes() != codec:
+        raise ValueError("site/tfic.js differs from the official js/tfic.js")
     codec_name = write_fingerprinted("tfic.js", codec)
     (OUTPUT / "tfic.js").write_bytes(codec)  # Stable URL for the documented import.
     script = (SOURCE / "app.js").read_text(encoding="utf-8")

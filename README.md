@@ -6,7 +6,7 @@
 
 Tedd.FIC is a .NET library and new lossless image format for tightly packed RGB and RGBA pixels. Its independent strips can encode and decode in parallel. The file container starts with `TFIC` and version byte `00`, and can preserve EXIF metadata.
 
-On the synthetic 512×512 gradient used below, FIC Fast encoded to **292,045 bytes in 2.06 ms**, compared with **353,053 bytes in 71.8 ms** for SkiaSharp PNG. Results depend on image content, codec settings, hardware, and runtime; run the included benchmark on representative images before making a format choice.
+Across the 5,000-image corpus below, FIC Fast produced **24.6% fewer bytes** than SkiaSharp PNG and spent **53× less aggregate time encoding** the same decoded pixels. Results depend on image content, codec settings, hardware, and runtime; run the included benchmark on representative images before making a format choice.
 
 ## Install
 
@@ -54,6 +54,53 @@ For untrusted files, use `Fic.TryGetInfo` to inspect dimensions before allocatio
 EXIF is optional (`length = 0`). The current decoder rejects unknown container versions and malformed lengths. The pixel checksum covers decoded pixels, not EXIF bytes.
 
 ## Benchmarks
+
+### Real-image corpus
+
+The corpus benchmark selects 1,000 decodable images without replacement from each of `Google Photos`, `test2017`, `train2017`, `unlabeled2017`, and `val2017` under `I:\Images`. It shuffles each folder with seed `20260926`, writes the complete selection before timing, and uses that same list for all six codecs. Two unreadable JPEG candidates were excluded while selecting the 5,000-image sample. The manifest stays local because it contains file names. Its SHA-256 is `dd7f86a141af583b7c0f28f40cfd5d057d6fb32ec77574cc3543be32b06c8531`.
+
+Images retain their original dimensions. Source JPEG decoding is outside the timed sections. Eight independent images run concurrently; reported encode and decode seconds are sums of per-image codec operation times under that load, **not wall-clock duration**. Speed in MP/s is total megapixels divided by that sum. All codecs receive the same decoded RGBA pixels without source metadata. FIC and PNG outputs are verified byte for byte against the decoded input. JPEG outputs use quality 90 and are lossy, so their sizes are not equivalent-quality comparisons. Results below were measured on an AMD Ryzen 9 5950X (16 cores, 32 logical processors), Windows 10.0.26200, and .NET 11 preview with ImageSharp 3.1.12 and SkiaSharp 4.151.2.
+
+Across all 5,000 images (11,880.902 megapixels):
+
+| Codec | Output GB | Encode s | Decode s |
+| --- | ---: | ---: | ---: |
+| FIC Fast | 10.607 | 62.101 | 30.976 |
+| FIC Default | 7.904 | 66.572 | 63.411 |
+| ImageSharp PNG | 13.772 | 4,007.196 | 164.190 |
+| SkiaSharp PNG | 14.070 | 3,312.809 | 244.089 |
+| ImageSharp JPEG q90 (lossy) | 2.526 | 109.804 | 81.188 |
+| SkiaSharp JPEG q90 (lossy) | 2.469 | 246.971 | 181.548 |
+
+Lossless output size by folder, in decimal MB (1,000 images per row):
+
+| Folder | FIC Fast | FIC Default | ImageSharp PNG | SkiaSharp PNG |
+| --- | ---: | ---: | ---: | ---: |
+| Google Photos | 8,843.9 | 6,425.5 | 11,568.4 | 11,915.1 |
+| test2017 | 439.8 | 369.0 | 550.3 | 538.5 |
+| train2017 | 439.4 | 368.9 | 549.7 | 537.0 |
+| unlabeled2017 | 449.3 | 377.5 | 561.1 | 548.0 |
+| val2017 | 434.6 | 362.7 | 542.9 | 530.9 |
+
+Summed per-image operation time by folder (1,000 images per row):
+
+| Folder | FIC Fast encode s | SkiaSharp PNG encode s | FIC Fast decode s | SkiaSharp PNG decode s |
+| --- | ---: | ---: | ---: | ---: |
+| Google Photos | 53.582 | 3,035.826 | 28.163 | 214.977 |
+| test2017 | 2.132 | 68.950 | 0.694 | 7.220 |
+| train2017 | 2.097 | 69.046 | 0.693 | 7.283 |
+| unlabeled2017 | 2.197 | 69.535 | 0.727 | 7.394 |
+| val2017 | 2.093 | 69.452 | 0.699 | 7.215 |
+
+FIC Default produced 43.8% fewer bytes than SkiaSharp PNG overall, with 49.8× less summed encode time. The folder selector on the [project site](https://tedd.no/Tedd.FIC/) shows lossless sizes for FIC and PNG, plus encode and decode speeds for all six codecs.
+
+The original JPEG files total 3.700 GB. Their smaller size reflects lossy compression; the FIC and PNG figures are lossless encodings of the decoded pixels.
+
+```sh
+dotnet run --project src/Tedd.FIC.Benchmark/Tedd.FIC.Benchmark.csproj -c Release -- --corpus I:\Images 1000 20260926 8
+```
+
+### Synthetic reference
 
 Measured on Windows 10.0.26200, .NET 11.0 preview, 32 logical processors, 512×512 RGBA synthetic images. Each cell is the median of five timed runs after one warmup. Encoding includes allocation of the output buffer; decoding includes materializing pixels. The benchmark checks lossless round trips. JPEG at quality 90 is lossy, so its sizes are **not** directly comparable as equivalent output quality.
 

@@ -61,6 +61,31 @@
       <p class="caption">Seed 20260926; 1,000 images per folder. AMD Ryzen 9 5950X, Windows, .NET 11 preview, eight independent image workers. These historical FIC measurements used uncompressed outer payloads. Times are summed per-image codec times, not wall-clock duration. Original JPEG files were decoded outside the timings; source metadata was omitted from all output formats. PNG and FIC were verified pixel for pixel. JPEG q90 is lossy; its speed is shown for context, while the size graph compares lossless formats only. <a href="https://github.com/tedd/Tedd.FIC#benchmarks">Full benchmark table and method →</a></p>
     </section>
 
+    <section class="section benchmark" id="outer-compression">
+      <div class="section-heading"><p class="eyebrow">OUTER COMPRESSION</p><h2>Choose size or speed</h2><p>Measured through the caller-buffer FIC APIs on 58 lossless images: six large photos, 32 COCO images, and 20 graphics. Each codec used the same pixels and FIC effort; every file was decoded and checked byte for byte.</p></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>FIC effort</th><th>Outer codec</th><th>Output MB</th><th>Saved</th><th>Encode ms</th><th>Decode ms</th></tr></thead>
+        <tbody>
+          <tr><td>Fast</td><td>None</td><td>59.821</td><td>—</td><td>255</td><td>146</td></tr>
+          <tr><td>Fast</td><td>Deflate</td><td>54.258</td><td>9.30%</td><td>2,012</td><td>300</td></tr>
+          <tr><td>Fast</td><td>GZip</td><td>54.259</td><td>9.30%</td><td>2,013</td><td>306</td></tr>
+          <tr><td>Fast</td><td>Zstandard q1</td><td>54.755</td><td>8.47%</td><td>324</td><td>196</td></tr>
+          <tr><td>Fast</td><td>Brotli q5</td><td>53.857</td><td>9.97%</td><td>2,186</td><td>462</td></tr>
+          <tr><td>Default</td><td>None</td><td>45.638</td><td>—</td><td>331</td><td>230</td></tr>
+          <tr><td>Default</td><td>Deflate</td><td>43.981</td><td>3.63%</td><td>1,666</td><td>355</td></tr>
+          <tr><td>Default</td><td>GZip</td><td>43.982</td><td>3.63%</td><td>1,670</td><td>359</td></tr>
+          <tr><td>Default</td><td>Zstandard q2</td><td>44.493</td><td>2.51%</td><td>388</td><td>248</td></tr>
+          <tr><td>Default</td><td>Brotli q5</td><td>43.712</td><td>4.22%</td><td>996</td><td>449</td></tr>
+          <tr><td>Max</td><td>None</td><td>45.635</td><td>—</td><td>339</td><td>224</td></tr>
+          <tr><td>Max</td><td>Deflate</td><td>43.978</td><td>3.63%</td><td>1,692</td><td>355</td></tr>
+          <tr><td>Max</td><td>GZip</td><td>43.979</td><td>3.63%</td><td>1,691</td><td>359</td></tr>
+          <tr><td>Max</td><td>Zstandard q2</td><td>44.492</td><td>2.50%</td><td>411</td><td>248</td></tr>
+          <tr><td>Max</td><td>Brotli q5</td><td>43.709</td><td>4.22%</td><td>1,028</td><td>449</td></tr>
+        </tbody>
+      </table></div>
+      <p class="caption">On the six large photos with Fast FICQ, explicit Zstandard q3 was the fastest tested setting to exceed 10% savings: 10.34% in 469 ms summed encode time. Zstandard q1 saved 9.67% in 237 ms; Deflate q6 saved 10.78% in 1,482 ms; Brotli q5 saved 11.60% in 1,961 ms. Fast defaults to no outer compression. One warmup and three timed repetitions per image; times sum per-image medians and exclude source decoding, file I/O, and destination allocation. AMD Ryzen 9 5950X, Windows, .NET 11 RC1. <a href="https://github.com/tedd/Tedd.FIC#outer-compression-on-real-images">Method and full table →</a></p>
+    </section>
+
     <section class="section benchmark" id="benchmark">
       <div class="section-heading"><p class="eyebrow">SYNTHETIC REFERENCE</p><h2>Controlled examples</h2><p>Lossless codecs were checked for exact pixel round trips. JPEG is shown for speed context; it is lossy at quality 90, so its file size is not an equivalent-quality comparison.</p></div>
       <div class="table-wrap"><table>

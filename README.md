@@ -37,12 +37,12 @@ Pass `zstdLevel: 3` with `compression: FicCompression.Zstd` to favor size over e
 
 ```csharp
 byte[] file = Fic.Encode(rgb, width, height, channels: 3,
-    effort: FicEffort.Fast, compression: FicCompression.Zstd);
+    effort: FicEffort.Fast, compression: FicCompression.Zstd, zstdLevel: 3);
 
 // Caller-owned output buffer; the outer compressor writes to a Span<byte>.
 byte[] buffer = new byte[checked((int)Fic.GetMaxEncodedLength(width, height, 3))];
 if (!Fic.TryEncode(rgb, width, height, 3, buffer, out int written,
-    effort: FicEffort.Fast, compression: FicCompression.Zstd))
+    effort: FicEffort.Fast, compression: FicCompression.Zstd, zstdLevel: 3))
     throw new InvalidOperationException("Buffer too small");
 ```
 
@@ -89,6 +89,32 @@ The [browser converter](http://tedd.no/Tedd.FIC/#convert) accepts JPEG, PNG, Web
 EXIF is optional (`length = 0`). Version `00` stores FICQ uncompressed. The decoder also accepts version `01` with `0` = none and `1` = Zstandard under the FIC signature. Version `02` assigns `0` = none, `1` = raw Deflate, `2` = GZip, `3` = Zstandard, `4` = Brotli. Compression covers only FICQ; EXIF bytes precede it. The expanded FICQ length is checked against the configurable 256 MiB default limit before allocation. The decoder rejects unknown versions, compression types, and malformed lengths. The pixel checksum covers decoded pixels, not EXIF bytes.
 
 ## Benchmarks
+
+### Outer compression on real images
+
+The span-based `Fic.TryEncode` and `Fic.TryDecode` APIs were measured on 58 losslessly decoded RGBA images: six large camera photos, 32 COCO images, and 20 distinct graphics. Every effort was tested with no outer compression and all four codecs. Deflate and GZip used quality 6, explicit Zstandard used quality 1 at Fast and quality 2 at Default/Max, and Brotli used quality 5. A separate run tested Zstandard quality 3 on the photos. Source decoding, file I/O, and caller-owned output buffer allocation were excluded. Each image/setting had one warmup and three timed runs; times below sum per-image medians. Every output was decoded and compared byte for byte with its input. Measurements used an AMD Ryzen 9 5950X, Windows, and .NET 11 RC1.
+
+| FIC effort | Outer codec | Output MB | Saved vs none | Encode ms | Decode ms |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Fast | None | 59.821 | — | 255 | 146 |
+| Fast | Deflate | 54.258 | 9.30% | 2,012 | 300 |
+| Fast | GZip | 54.259 | 9.30% | 2,013 | 306 |
+| Fast | Zstandard q1 | 54.755 | 8.47% | 324 | 196 |
+| Fast | Brotli q5 | 53.857 | 9.97% | 2,186 | 462 |
+| Default | None | 45.638 | — | 331 | 230 |
+| Default | Deflate | 43.981 | 3.63% | 1,666 | 355 |
+| Default | GZip | 43.982 | 3.63% | 1,670 | 359 |
+| Default | Zstandard q2 | 44.493 | 2.51% | 388 | 248 |
+| Default | Brotli q5 | 43.712 | 4.22% | 996 | 449 |
+| Max | None | 45.635 | — | 339 | 224 |
+| Max | Deflate | 43.978 | 3.63% | 1,692 | 355 |
+| Max | GZip | 43.979 | 3.63% | 1,691 | 359 |
+| Max | Zstandard q2 | 44.492 | 2.50% | 411 | 248 |
+| Max | Brotli q5 | 43.709 | 4.22% | 1,028 | 449 |
+
+On the six large photos with Fast FICQ, Zstandard q1 saved 9.67% in 237 ms, Zstandard q3 saved **10.34% in 469 ms**, Deflate q6 saved 10.78% in 1,482 ms, and Brotli q5 saved 11.60% in 1,961 ms. Zstandard q3 was the fastest measured option to exceed 10% on that photo subset. The 10% threshold was not reached by any tested codec on the full 58-image set. `FicEffort.Fast` defaults to no outer compression.
+
+The outer compressors use .NET 11 span APIs and write into caller-owned buffers. The whole encoder is not allocation-free: the FICQ strip encoders still allocate internal scratch. The local CSV retains per-image sizes, timings, and measured thread allocations. The selection manifest remains local because it contains private file names. Re-run with `tools/OuterCompressionStudy` and a corpus selection manifest.
 
 ### Real-image corpus
 

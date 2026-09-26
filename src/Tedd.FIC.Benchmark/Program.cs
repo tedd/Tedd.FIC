@@ -6,6 +6,13 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SkiaSharp;
 using Tedd.FIC;
+using Tedd.FIC.Benchmark;
+
+if (args.Length > 0 && args[0] == "--corpus")
+{
+    CorpusBenchmark.Run(args);
+    return;
+}
 
 const int width = 512, height = 512;
 int iterations = args.Length > 0 ? int.Parse(args[0]) : 7;

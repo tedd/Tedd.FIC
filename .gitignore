@@ -427,3 +427,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+# Local corpus selections and per-image benchmark data (may contain private file names).
+benchmark-output/

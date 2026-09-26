@@ -1,0 +1,308 @@
+{
+  "sample_per_folder": 1000,
+  "seed": 20260926,
+  "workers": 8,
+  "manifest_sha256": "dd7f86a141af583b7c0f28f40cfd5d057d6fb32ec77574cc3543be32b06c8531",
+  "rows": [
+    {
+      "folder": "Google Photos",
+      "codec": "FIC Fast",
+      "images": 1000,
+      "megapixels": 10779.514,
+      "source_bytes": 3047940895,
+      "encoded_bytes": 8843869746,
+      "encode_seconds": 53.582,
+      "decode_seconds": 28.163
+    },
+    {
+      "folder": "Google Photos",
+      "codec": "FIC Default",
+      "images": 1000,
+      "megapixels": 10779.514,
+      "source_bytes": 3047940895,
+      "encoded_bytes": 6425509969,
+      "encode_seconds": 57.23,
+      "decode_seconds": 57.123
+    },
+    {
+      "folder": "Google Photos",
+      "codec": "ImageSharp PNG",
+      "images": 1000,
+      "megapixels": 10779.514,
+      "source_bytes": 3047940895,
+      "encoded_bytes": 11568439388,
+      "encode_seconds": 3592.32,
+      "decode_seconds": 137.888
+    },
+    {
+      "folder": "Google Photos",
+      "codec": "SkiaSharp PNG",
+      "images": 1000,
+      "megapixels": 10779.514,
+      "source_bytes": 3047940895,
+      "encoded_bytes": 11915140588,
+      "encode_seconds": 3035.826,
+      "decode_seconds": 214.977
+    },
+    {
+      "folder": "Google Photos",
+      "codec": "ImageSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 10779.514,
+      "source_bytes": 3047940895,
+      "encoded_bytes": 2174973632,
+      "encode_seconds": 97.799,
+      "decode_seconds": 71.97
+    },
+    {
+      "folder": "Google Photos",
+      "codec": "SkiaSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 10779.514,
+      "source_bytes": 3047940895,
+      "encoded_bytes": 2125123884,
+      "encode_seconds": 220.511,
+      "decode_seconds": 162.469
+    },
+    {
+      "folder": "test2017",
+      "codec": "FIC Fast",
+      "images": 1000,
+      "megapixels": 274.278,
+      "source_bytes": 162961102,
+      "encoded_bytes": 439775378,
+      "encode_seconds": 2.132,
+      "decode_seconds": 0.694
+    },
+    {
+      "folder": "test2017",
+      "codec": "FIC Default",
+      "images": 1000,
+      "megapixels": 274.278,
+      "source_bytes": 162961102,
+      "encoded_bytes": 368974447,
+      "encode_seconds": 2.4,
+      "decode_seconds": 1.57
+    },
+    {
+      "folder": "test2017",
+      "codec": "ImageSharp PNG",
+      "images": 1000,
+      "megapixels": 274.278,
+      "source_bytes": 162961102,
+      "encoded_bytes": 550263375,
+      "encode_seconds": 103.02,
+      "decode_seconds": 6.523
+    },
+    {
+      "folder": "test2017",
+      "codec": "SkiaSharp PNG",
+      "images": 1000,
+      "megapixels": 274.278,
+      "source_bytes": 162961102,
+      "encoded_bytes": 538522143,
+      "encode_seconds": 68.95,
+      "decode_seconds": 7.22
+    },
+    {
+      "folder": "test2017",
+      "codec": "ImageSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 274.278,
+      "source_bytes": 162961102,
+      "encoded_bytes": 88345061,
+      "encode_seconds": 3.002,
+      "decode_seconds": 2.324
+    },
+    {
+      "folder": "test2017",
+      "codec": "SkiaSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 274.278,
+      "source_bytes": 162961102,
+      "encoded_bytes": 86635478,
+      "encode_seconds": 6.601,
+      "decode_seconds": 4.71
+    },
+    {
+      "folder": "train2017",
+      "codec": "FIC Fast",
+      "images": 1000,
+      "megapixels": 275.26,
+      "source_bytes": 163156696,
+      "encoded_bytes": 439427302,
+      "encode_seconds": 2.097,
+      "decode_seconds": 0.693
+    },
+    {
+      "folder": "train2017",
+      "codec": "FIC Default",
+      "images": 1000,
+      "megapixels": 275.26,
+      "source_bytes": 163156696,
+      "encoded_bytes": 368919385,
+      "encode_seconds": 2.363,
+      "decode_seconds": 1.557
+    },
+    {
+      "folder": "train2017",
+      "codec": "ImageSharp PNG",
+      "images": 1000,
+      "megapixels": 275.26,
+      "source_bytes": 163156696,
+      "encoded_bytes": 549747245,
+      "encode_seconds": 103.029,
+      "decode_seconds": 6.517
+    },
+    {
+      "folder": "train2017",
+      "codec": "SkiaSharp PNG",
+      "images": 1000,
+      "megapixels": 275.26,
+      "source_bytes": 163156696,
+      "encoded_bytes": 536985135,
+      "encode_seconds": 69.046,
+      "decode_seconds": 7.283
+    },
+    {
+      "folder": "train2017",
+      "codec": "ImageSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 275.26,
+      "source_bytes": 163156696,
+      "encoded_bytes": 87569419,
+      "encode_seconds": 2.976,
+      "decode_seconds": 2.292
+    },
+    {
+      "folder": "train2017",
+      "codec": "SkiaSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 275.26,
+      "source_bytes": 163156696,
+      "encoded_bytes": 85880508,
+      "encode_seconds": 6.612,
+      "decode_seconds": 4.719
+    },
+    {
+      "folder": "unlabeled2017",
+      "codec": "FIC Fast",
+      "images": 1000,
+      "megapixels": 278.353,
+      "source_bytes": 165621242,
+      "encoded_bytes": 449264963,
+      "encode_seconds": 2.197,
+      "decode_seconds": 0.727
+    },
+    {
+      "folder": "unlabeled2017",
+      "codec": "FIC Default",
+      "images": 1000,
+      "megapixels": 278.353,
+      "source_bytes": 165621242,
+      "encoded_bytes": 377454116,
+      "encode_seconds": 2.344,
+      "decode_seconds": 1.597
+    },
+    {
+      "folder": "unlabeled2017",
+      "codec": "ImageSharp PNG",
+      "images": 1000,
+      "megapixels": 278.353,
+      "source_bytes": 165621242,
+      "encoded_bytes": 561101813,
+      "encode_seconds": 103.964,
+      "decode_seconds": 6.703
+    },
+    {
+      "folder": "unlabeled2017",
+      "codec": "SkiaSharp PNG",
+      "images": 1000,
+      "megapixels": 278.353,
+      "source_bytes": 165621242,
+      "encoded_bytes": 547991655,
+      "encode_seconds": 69.535,
+      "decode_seconds": 7.394
+    },
+    {
+      "folder": "unlabeled2017",
+      "codec": "ImageSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 278.353,
+      "source_bytes": 165621242,
+      "encoded_bytes": 89214262,
+      "encode_seconds": 3.006,
+      "decode_seconds": 2.325
+    },
+    {
+      "folder": "unlabeled2017",
+      "codec": "SkiaSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 278.353,
+      "source_bytes": 165621242,
+      "encoded_bytes": 87528994,
+      "encode_seconds": 6.707,
+      "decode_seconds": 4.882
+    },
+    {
+      "folder": "val2017",
+      "codec": "FIC Fast",
+      "images": 1000,
+      "megapixels": 273.497,
+      "source_bytes": 160414692,
+      "encoded_bytes": 434626693,
+      "encode_seconds": 2.093,
+      "decode_seconds": 0.699
+    },
+    {
+      "folder": "val2017",
+      "codec": "FIC Default",
+      "images": 1000,
+      "megapixels": 273.497,
+      "source_bytes": 160414692,
+      "encoded_bytes": 362669742,
+      "encode_seconds": 2.235,
+      "decode_seconds": 1.564
+    },
+    {
+      "folder": "val2017",
+      "codec": "ImageSharp PNG",
+      "images": 1000,
+      "megapixels": 273.497,
+      "source_bytes": 160414692,
+      "encoded_bytes": 542903561,
+      "encode_seconds": 104.863,
+      "decode_seconds": 6.559
+    },
+    {
+      "folder": "val2017",
+      "codec": "SkiaSharp PNG",
+      "images": 1000,
+      "megapixels": 273.497,
+      "source_bytes": 160414692,
+      "encoded_bytes": 530944936,
+      "encode_seconds": 69.452,
+      "decode_seconds": 7.215
+    },
+    {
+      "folder": "val2017",
+      "codec": "ImageSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 273.497,
+      "source_bytes": 160414692,
+      "encoded_bytes": 85708969,
+      "encode_seconds": 3.021,
+      "decode_seconds": 2.277
+    },
+    {
+      "folder": "val2017",
+      "codec": "SkiaSharp JPEG q90",
+      "images": 1000,
+      "megapixels": 273.497,
+      "source_bytes": 160414692,
+      "encoded_bytes": 84119280,
+      "encode_seconds": 6.54,
+      "decode_seconds": 4.768
+    }
+  ]
+}

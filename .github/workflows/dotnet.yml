@@ -28,6 +28,9 @@ jobs:
     needs: build-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
     runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -35,11 +38,16 @@ jobs:
           dotnet-version: 11.0.100-preview.7.26381.103
       - name: Pack unique deploy version
         run: dotnet pack src/Tedd.FIC/Tedd.FIC.csproj -c Release -p:PackageVersion=0.1.${{ github.run_number }} --output artifacts/packages
+      - name: Log in to NuGet.org with OIDC
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: tedd
       - name: Publish to NuGet
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
         shell: pwsh
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) { throw 'Set the NUGET_API_KEY repository secret.' }
+          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) { throw 'NuGet trusted publishing did not return an API key.' }
           dotnet nuget push artifacts/packages/*.nupkg --source https://api.nuget.org/v3/index.json --api-key $env:NUGET_API_KEY --skip-duplicate
           if ($LASTEXITCODE -ne 0) { throw "NuGet publish failed: $LASTEXITCODE" }

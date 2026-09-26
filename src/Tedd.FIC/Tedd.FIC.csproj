@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Tedd.FIC</RootNamespace>
+    <PackageId>Tedd.FIC</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Tedd Hansen</Authors>
+    <Description>FIC is a lossless RGB and RGBA image format for .NET with a versioned container and optional EXIF metadata.</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/tedd/Tedd.FIC</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tedd/Tedd.FIC</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>image;compression;lossless;rgb;rgba;exif</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../LICENSE" Pack="true" PackagePath="" />
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7faf9">
+  <meta name="description" content="Tedd.FIC is a .NET library for a new lossless image format with faster encoding and smaller files than PNG on measured synthetic samples.">
+  <title>Tedd.FIC — lossless image compression for .NET</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Tedd.FIC home"><span class="brand-mark">F</span> TEDD<span class="slash">/</span>FIC</a>
+    <nav aria-label="Primary navigation">
+      <a href="#benchmark">Benchmarks</a>
+      <a href="#use">Use</a>
+      <a href="#format">Format</a>
+      <a href="https://github.com/tedd/Tedd.FIC">GitHub</a>
+      <a class="nav-cta" href="https://www.nuget.org/packages/Tedd.FIC">NuGet ↗</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <p class="eyebrow"><span></span> .NET image library · lossless RGB &amp; RGBA</p>
+        <h1>A new image format<br>for <em>smaller, faster</em> files.</h1>
+        <p class="lede">Tedd.FIC is a .NET library for a new lossless image format. On our 512×512 gradient test, FIC Fast produced a file <strong>17% smaller</strong> than SkiaSharp PNG and encoded it <strong>35× faster</strong>. The format includes a versioned container and optional EXIF metadata.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="https://www.nuget.org/packages/Tedd.FIC">Get the NuGet package ↗</a>
+          <a class="button secondary" href="https://github.com/tedd/Tedd.FIC">View on GitHub</a>
+        </div>
+        <div class="badges" aria-label="Package and build status">
+          <a href="https://www.nuget.org/packages/Tedd.FIC"><img src="https://img.shields.io/nuget/v/Tedd.FIC?label=NuGet" alt="NuGet version"></a>
+          <a href="https://www.nuget.org/packages/Tedd.FIC"><img src="https://img.shields.io/nuget/dt/Tedd.FIC?label=downloads" alt="NuGet downloads"></a>
+          <a href="https://github.com/tedd/Tedd.FIC/actions/workflows/dotnet.yml"><img src="https://github.com/tedd/Tedd.FIC/actions/workflows/dotnet.yml/badge.svg" alt="GitHub build status"></a>
+        </div>
+        <p class="hero-note">Measured synthetic sample; performance varies with image content and hardware. <a href="#benchmark">See the benchmark conditions ↓</a></p>
+      </div>
+      <div class="metric-panel" aria-label="Gradient benchmark result">
+        <div class="panel-top"><span>GRADIENT TEST</span><span>512 × 512 RGBA</span></div>
+        <p class="panel-intro">FIC Fast compared with SkiaSharp PNG</p>
+        <div class="metric"><span>FILE SIZE</span><strong>292 KB <small>vs 353 KB</small></strong><div class="bar-track"><i class="fic-bar"></i></div><p>17% smaller</p></div>
+        <div class="metric"><span>ENCODE TIME</span><strong>2.06 ms <small>vs 71.8 ms</small></strong><div class="bar-track"><i class="time-bar"></i></div><p>35× faster</p></div>
+        <p class="panel-foot">Median of 5 runs · .NET 11 preview · Windows</p>
+      </div>
+    </section>
+
+    <section class="section benchmark" id="benchmark">
+      <div class="section-heading"><p class="eyebrow">MEASURED RESULTS</p><h2>Compare the outputs</h2><p>Lossless codecs were checked for exact pixel round trips. JPEG is shown for speed context; it is lossy at quality 90, so its file size is not an equivalent-quality comparison.</p></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Image</th><th>Codec</th><th>Bytes</th><th>Encode</th><th>Decode</th></tr></thead>
+        <tbody>
+          <tr class="highlight"><td>Gradient</td><td>FIC Fast</td><td>292,045</td><td>2.06 ms</td><td>3.24 ms</td></tr>
+          <tr><td>Gradient</td><td>ImageSharp PNG</td><td>391,293</td><td>98.29 ms</td><td>11.28 ms</td></tr>
+          <tr><td>Gradient</td><td>SkiaSharp PNG</td><td>353,053</td><td>71.80 ms</td><td>4.66 ms</td></tr>
+          <tr class="highlight"><td>Graphics</td><td>FIC Fast</td><td>1,977</td><td>1.98 ms</td><td>0.15 ms</td></tr>
+          <tr><td>Graphics</td><td>ImageSharp PNG</td><td>2,368</td><td>5.51 ms</td><td>1.03 ms</td></tr>
+          <tr><td>Graphics</td><td>SkiaSharp PNG</td><td>2,426</td><td>10.34 ms</td><td>2.11 ms</td></tr>
+          <tr class="highlight"><td>Noise</td><td>FIC Fast</td><td>835,271</td><td>2.92 ms</td><td>3.36 ms</td></tr>
+          <tr><td>Noise</td><td>ImageSharp PNG</td><td>900,102</td><td>52.09 ms</td><td>5.07 ms</td></tr>
+          <tr><td>Noise</td><td>SkiaSharp PNG</td><td>918,060</td><td>49.05 ms</td><td>8.16 ms</td></tr>
+        </tbody>
+      </table></div>
+      <p class="caption">Synthetic 512×512 RGBA images on Windows 10.0.26200 with .NET 11 preview and 32 logical processors. Median of five timed repetitions after warmup. ImageSharp 3.1.12 and SkiaSharp 4.151.2. <a href="https://github.com/tedd/Tedd.FIC#benchmarks">Full results, including JPEG, and reproduction steps →</a></p>
+    </section>
+
+    <section class="section use" id="use">
+      <div class="section-heading"><p class="eyebrow">GET STARTED</p><h2>A small API for raw pixels</h2><p>Supply interleaved RGB or RGBA bytes in row-major order. The decoder restores the original bytes and dimensions.</p></div>
+      <div class="code-grid"><div class="code-card"><div class="code-title"><span>INSTALL</span><button data-copy="dotnet add package Tedd.FIC">Copy</button></div><pre><code>dotnet add package Tedd.FIC</code></pre></div>
+      <div class="code-card"><div class="code-title"><span>ENCODE &amp; DECODE</span></div><pre><code>using Tedd.FIC;
+
+byte[] file = Fic.Encode(rgb, width, height, 3,
+    effort: FicEffort.Fast);
+byte[] pixels = Fic.Decode(file,
+    out int w, out int h, out int channels);</code></pre></div></div>
+      <p class="caption">The package currently targets .NET 11 preview. The default effort offers smaller files with more encode work.</p>
+    </section>
+
+    <section class="section format" id="format">
+      <div class="section-heading"><p class="eyebrow">FILE FORMAT</p><h2>A container with room for metadata</h2><p>Files start with <code>TFIC</code>, followed by a single version byte (<code>00</code>) and an EXIF length. The optional raw EXIF TIFF payload comes before the compressed image data. The pixel stream includes a CRC-32C checksum.</p></div>
+      <div class="format-strip" aria-label="TFIC version 00 file layout"><div><span>0–3</span><strong>TFIC</strong></div><div><span>4</span><strong>00</strong></div><div><span>5–8</span><strong>EXIF length</strong></div><div><span>9…</span><strong>EXIF data</strong></div><div><span>next…</span><strong>Image payload</strong></div></div>
+      <p class="caption">EXIF is preserved as bytes; the library does not interpret its tags. <a href="https://github.com/tedd/Tedd.FIC#container-version-00">Read the container specification →</a></p>
+    </section>
+  </main>
+  <footer><span>TEDD<span class="slash">/</span>FIC</span><p>Lossless image compression for .NET · MIT licensed</p><a href="https://github.com/tedd/Tedd.FIC">GitHub ↗</a></footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

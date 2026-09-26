@@ -81,8 +81,8 @@ internal static class CorpusBenchmark
 
         Codec[] codecs =
         [
-            new("FIC Fast", true, (p, w, h) => Fic.Encode(p, w, h, 4, FicEffort.Fast), b => Fic.Decode(b, out _, out _, out _)),
-            new("FIC Default", true, (p, w, h) => Fic.Encode(p, w, h, 4), b => Fic.Decode(b, out _, out _, out _)),
+            new("FIC Fast", true, (p, w, h) => Fic.Encode(p, w, h, 4, FicEffort.Fast, compression: FicCompression.None), b => Fic.Decode(b, out _, out _, out _)),
+            new("FIC Default", true, (p, w, h) => Fic.Encode(p, w, h, 4, compression: FicCompression.None), b => Fic.Decode(b, out _, out _, out _)),
             new("ImageSharp PNG", true, (p, w, h) => ImageSharpEncode(p, w, h, false), ImageSharpDecode),
             new("SkiaSharp PNG", true, (p, w, h) => SkiaEncode(p, w, h, SKEncodedImageFormat.Png), SkiaDecode),
             new("ImageSharp JPEG q90", false, (p, w, h) => ImageSharpEncode(p, w, h, true), ImageSharpDecode),

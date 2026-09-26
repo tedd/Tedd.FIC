@@ -24,8 +24,8 @@ foreach (string pattern in new[] { "gradient", "graphics", "noise" })
     byte[] pixels = Generate(pattern);
     foreach (var codec in new (string Name, Func<byte[], byte[]> Encode, Func<byte[], byte[]> Decode)[]
     {
-        ("FIC Fast", p => Fic.Encode(p, width, height, 4, FicEffort.Fast), b => Fic.Decode(b, out _, out _, out _)),
-        ("FIC Default", p => Fic.Encode(p, width, height, 4), b => Fic.Decode(b, out _, out _, out _)),
+        ("FIC Fast", p => Fic.Encode(p, width, height, 4, FicEffort.Fast, compression: FicCompression.None), b => Fic.Decode(b, out _, out _, out _)),
+        ("FIC Default", p => Fic.Encode(p, width, height, 4, compression: FicCompression.None), b => Fic.Decode(b, out _, out _, out _)),
         ("ImageSharp PNG", p => ImageSharpEncode(p, false), b => ImageSharpDecode(b)),
         ("SkiaSharp PNG", p => SkiaEncode(p, SKEncodedImageFormat.Png), b => SkiaDecode(b)),
         ("ImageSharp JPEG q90", p => ImageSharpEncode(p, true), b => ImageSharpDecode(b)),

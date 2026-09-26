@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Tedd.FIC.svg)](https://www.nuget.org/packages/Tedd.FIC)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Tedd.FIC.svg)](https://www.nuget.org/packages/Tedd.FIC)
 
-Tedd.FIC is a lossless image format for tightly packed RGB and RGBA pixels, with a .NET library and a JavaScript module. Its independent strips can encode and decode in parallel in .NET. The file container starts with `TFIC` and version byte `00`, and can preserve EXIF metadata.
+Tedd.FIC is a lossless image format for tightly packed RGB and RGBA pixels, with a .NET library and a JavaScript module. Its independent strips can encode and decode in parallel in .NET. The `.fic` file container starts with `FIC` followed by a NUL byte, supports optional Deflate, GZip, Zstandard, or Brotli payload compression, and can preserve EXIF metadata.
 
 Across the 5,000-image corpus below, FIC Fast produced **24.6% fewer bytes** than SkiaSharp PNG and spent **53× less aggregate time encoding** the same decoded pixels. Results depend on image content, codec settings, hardware, and runtime; run the included benchmark on representative images before making a format choice.
 
@@ -14,7 +14,7 @@ Across the 5,000-image corpus below, FIC Fast produced **24.6% fewer bytes** tha
 dotnet add package Tedd.FIC
 ```
 
-The current package targets .NET 11 preview.
+The current package targets .NET 11 RC1 or later.
 
 ## Use
 
@@ -23,13 +23,28 @@ using Tedd.FIC;
 
 // rgb contains width * height * 3 bytes in row-major RGB order.
 byte[] file = Fic.Encode(rgb, width, height, channels: 3, effort: FicEffort.Fast);
-File.WriteAllBytes("image.tfic", file);
+File.WriteAllBytes("image.fic", file);
 
-byte[] pixels = Fic.Decode(File.ReadAllBytes("image.tfic"),
+byte[] pixels = Fic.Decode(File.ReadAllBytes("image.fic"),
     out int decodedWidth, out int decodedHeight, out int channels);
 ```
 
 RGBA uses `channels: 4`. `FicEffort.Default` trades encoding time for size; `FicEffort.Max` tries an additional byte mode. The decoder accepts all effort levels. `threads` controls strip parallelism; encoded bytes are independent of the thread count.
+
+The default `FicCompression.Auto` uses no outer compression for `FicEffort.Fast`, Zstandard quality 2 for `FicEffort.Default`, and Brotli quality 5 for `FicEffort.Max`. Explicit `FicCompression.Zstd` at Fast effort uses quality 1. Choose `None`, `Deflate`, `Gzip`, `Zstd`, or `Brotli` with the `compression` argument. The encoder stores the raw FICQ payload when compression would increase its size. Uncompressed output uses version `00`; compressed requests use version `02`.
+
+Pass `zstdLevel: 3` with `compression: FicCompression.Zstd` to favor size over encoding speed. The default level is determined by effort; this override does not change the format byte.
+
+```csharp
+byte[] file = Fic.Encode(rgb, width, height, channels: 3,
+    effort: FicEffort.Fast, compression: FicCompression.Zstd);
+
+// Caller-owned output buffer; the outer compressor writes to a Span<byte>.
+byte[] buffer = new byte[checked((int)Fic.GetMaxEncodedLength(width, height, 3))];
+if (!Fic.TryEncode(rgb, width, height, 3, buffer, out int written,
+    effort: FicEffort.Fast, compression: FicCompression.Zstd))
+    throw new InvalidOperationException("Buffer too small");
+```
 
 EXIF is passed as a raw TIFF EXIF payload and returned unchanged. Callers obtain this payload from an image metadata parser; FIC does not interpret EXIF tags.
 
@@ -39,33 +54,39 @@ if (Fic.TryGetExif(file, out ReadOnlySpan<byte> exif))
     Console.WriteLine($"EXIF bytes: {exif.Length}");
 ```
 
-For untrusted files, use `Fic.TryGetInfo` to inspect dimensions before allocation, or `Fic.Decode` with a suitable `maxPixels` limit. `Fic.TryDecode` writes into a caller-owned buffer and verifies the pixel checksum by default.
+For untrusted files, use `Fic.TryGetInfo` to inspect dimensions before pixel allocation, or `Fic.Decode` with a suitable `maxPixels` limit. Compressed payloads are limited to 256 MiB after expansion by default; the `maxCompressedPayloadBytes` argument can change that limit. `Fic.TryDecode` writes into a caller-owned buffer and verifies the pixel checksum by default.
 
 ### JavaScript
 
-The official dependency-free [JavaScript module](js/tfic.js) works in browsers and Node.js. It accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output.
+The [JavaScript module](js/fic.js) works in browsers and Node.js. `decode` handles uncompressed and Zstandard files synchronously, using a bundled Zstandard decoder. `decodeAsync` also handles Deflate, GZip, and Brotli with the platform's `DecompressionStream`; Brotli requires browser support for that format. The module accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes uncompressed version `00` files with Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output.
+
+The [TypeScript source](ts/fic.ts) generates the official JavaScript module and its [type declarations](js/fic.d.ts). Run `npm ci --prefix ts` and `npm run build --prefix ts` from the repository root.
 
 ```js
-import { encode, decode, getInfo } from './js/tfic.js';
+import { encode, decode, decodeAsync, getInfo } from './js/fic.js';
 
 const file = encode(rgba, width, height, 4); // Uint8Array of RGBA pixels
 const info = getInfo(file);                   // dimensions before decoding
 const { pixels, width: w, height: h, channels } = decode(file);
+const response = await fetch('from-dotnet.fic');
+const decodedFromDotNet = await decodeAsync(new Uint8Array(await response.arrayBuffer()));
 ```
 
-The [browser converter](http://tedd.no/Tedd.FIC/#convert) accepts JPEG, PNG, WebP, and TFIC files. It reports actual file-size ratios, displays the converted image, and provides a download. Browser-produced WebP and JPEG may be lossy.
+The [browser converter](http://tedd.no/Tedd.FIC/#convert) accepts JPEG, PNG, WebP, and FIC files. It reports actual file-size ratios, displays the converted image, and provides a download. Browser-produced WebP and JPEG may be lossy.
 
-## Container version 00
+## Container
 
 | Offset | Field |
 | ---: | --- |
-| 0–3 | ASCII `TFIC` |
-| 4 | Container version `00` |
-| 5–8 | EXIF payload length, unsigned little-endian 32-bit integer |
-| 9… | Raw EXIF TIFF payload, at most 16 MiB |
+| 0–3 | ASCII `FIC` followed by NUL (`00`) |
+| 4 | Container version: `00`, `01`, or `02` |
+| 5 | Versions `01`/`02`: compression type |
+| 5–8 (`00`), 6–9 (`01`/`02`) | EXIF payload length, unsigned little-endian 32-bit integer |
+| 10–13 (`02`) | Expanded FICQ payload length, unsigned little-endian 32-bit integer |
+| 9… (`00`), 10… (`01`), 14… (`02`) | Raw EXIF TIFF payload, at most 16 MiB |
 | next… | Lossless image payload with strip table and pixel CRC-32C |
 
-EXIF is optional (`length = 0`). The current decoder rejects unknown container versions and malformed lengths. The pixel checksum covers decoded pixels, not EXIF bytes.
+EXIF is optional (`length = 0`). Version `00` stores FICQ uncompressed. The decoder also accepts version `01` with `0` = none and `1` = Zstandard under the FIC signature. Version `02` assigns `0` = none, `1` = raw Deflate, `2` = GZip, `3` = Zstandard, `4` = Brotli. Compression covers only FICQ; EXIF bytes precede it. The expanded FICQ length is checked against the configurable 256 MiB default limit before allocation. The decoder rejects unknown versions, compression types, and malformed lengths. The pixel checksum covers decoded pixels, not EXIF bytes.
 
 ## Benchmarks
 

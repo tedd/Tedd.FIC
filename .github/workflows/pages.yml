@@ -6,6 +6,7 @@ on:
     paths:
       - site/**
       - js/**
+      - ts/**
       - tests/**
       - tools/build_site.py
       - .github/workflows/pages.yml
@@ -30,11 +31,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compile TypeScript codec and declarations
+        run: |
+          npm ci --prefix ts
+          npm run build --prefix ts
+          git diff --exit-code -- js/fic.js js/fic.d.ts site/fic.js
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 11.0.100-preview.7.26381.103
+          dotnet-version: 11.0.100-rc.1.26425.128
       - name: Check JavaScript and .NET interoperability
-        run: node tests/tfic.test.mjs
+        run: node tests/fic.test.mjs
       - uses: actions/configure-pages@v5
       - run: python tools/build_site.py
       - uses: actions/upload-pages-artifact@v3

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "site"
 OUTPUT = ROOT / "site-dist"
-OFFICIAL_CODEC = ROOT / "js" / "tfic.js"
+OFFICIAL_CODEC = ROOT / "js" / "fic.js"
 
 
 def replace_once(content: str, old: str, new: str) -> str:
@@ -35,13 +35,13 @@ def main() -> None:
 
     data_name = write_fingerprinted("benchmark-data.json", (SOURCE / "benchmark-data.json").read_bytes())
     codec = OFFICIAL_CODEC.read_bytes()
-    if (SOURCE / "tfic.js").read_bytes() != codec:
-        raise ValueError("site/tfic.js differs from the official js/tfic.js")
-    codec_name = write_fingerprinted("tfic.js", codec)
-    (OUTPUT / "tfic.js").write_bytes(codec)  # Stable URL for the documented import.
+    if (SOURCE / "fic.js").read_bytes() != codec:
+        raise ValueError("site/fic.js differs from the official js/fic.js")
+    codec_name = write_fingerprinted("fic.js", codec)
+    (OUTPUT / "fic.js").write_bytes(codec)  # Stable URL for the documented import.
     script = (SOURCE / "app.js").read_text(encoding="utf-8")
     script = replace_once(script, "fetch('benchmark-data.json')", f"fetch('{data_name}')")
-    script = replace_once(script, "import('./tfic.js')", f"import('./{codec_name}')")
+    script = replace_once(script, "import('./fic.js')", f"import('./{codec_name}')")
     script_name = write_fingerprinted("app.js", script.encode("utf-8"))
     style_name = write_fingerprinted("styles.css", (SOURCE / "styles.css").read_bytes())
 
@@ -51,7 +51,7 @@ def main() -> None:
     (OUTPUT / "index.html").write_text(html, encoding="utf-8")
 
     for item in SOURCE.iterdir():
-        if item.is_file() and item.name not in {"index.html", "app.js", "styles.css", "benchmark-data.json", "tfic.js"}:
+        if item.is_file() and item.name not in {"index.html", "app.js", "styles.css", "benchmark-data.json", "fic.js"}:
             shutil.copy2(item, OUTPUT / item.name)
 
     print(f"Built {OUTPUT}")

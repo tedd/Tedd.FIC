@@ -3,9 +3,9 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { decode, encode, getInfo } from '../js/tfic.js';
+import { decode, decodeAsync, encode, getInfo } from '../js/fic.js';
 
-const directory = mkdtempSync(join(tmpdir(), 'tfic-js-'));
+const directory = mkdtempSync(join(tmpdir(), 'fic-js-'));
 const project = new URL('./Interop/Interop.csproj', import.meta.url).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
 const crcTable = Uint32Array.from({ length: 256 }, (_, i) => {
   let c = i;
@@ -30,41 +30,60 @@ function fixture(slot, palette) {
   const q = Uint8Array.from([...header, payload.length * 8 + slot, ...payload, 0, 0, 0, 0]);
   const crc = crc32c(pixels, crc32c(Uint8Array.from(header)));
   q.set([crc & 255, crc >>> 8 & 255, crc >>> 16 & 255, crc >>> 24], q.length - 4);
-  return { pixels, file: Uint8Array.from([84, 70, 73, 67, 0, 0, 0, 0, 0, ...q]) };
+  return { pixels, file: Uint8Array.from([70, 73, 67, 0, 0, 0, 0, 0, 0, ...q]) };
 }
 try {
   execFileSync('dotnet', ['run', '--project', project, '--', 'generate', directory], { stdio: 'inherit' });
   let decoded = 0;
   const slots = new Map();
-  for (const name of readdirSync(directory).filter(n => n.endsWith('.tfic'))) {
+  const compressionTypes = new Set();
+  for (const name of readdirSync(directory).filter(n => n.endsWith('.fic'))) {
     const source = readFileSync(join(directory, name));
-    let at = 15; // TFIC header (9), FICQ magic/version/tier (6).
-    const readVarint = () => { let value = 0, shift = 0, b; do { b = source[at++]; value |= (b & 127) << shift; shift += 7; } while (b & 128); return value; };
-    readVarint(); readVarint(); // width, height
-    const flags = source[at++]; readVarint(); // strip rows
-    if (flags & 4) { const count = source[at++] + 1; at += count * (flags & 1 ? 4 : 3) + 10; }
-    const slot = readVarint() & 7;
-    const key = `${source[14]}:${slot}`;
-    slots.set(key, (slots.get(key) || 0) + 1);
-    const stem = name.replace(/-(Fast|Default|Max)\.tfic$/, '');
+    assert.deepEqual([...source.subarray(0, 4)], [70, 73, 67, 0]);
+    if (source[4] === 0) {
+      const payloadStart = 9 + source.readUInt32LE(5);
+      let at = payloadStart + 6;
+      const readVarint = () => { let value = 0, shift = 0, b; do { b = source[at++]; value |= (b & 127) << shift; shift += 7; } while (b & 128); return value; };
+      readVarint(); readVarint(); // width, height
+      const flags = source[at++]; readVarint(); // strip rows
+      if (flags & 4) { const count = source[at++] + 1; at += count * (flags & 1 ? 4 : 3) + 10; }
+      const slot = readVarint() & 7;
+      const key = `${source[payloadStart + 5]}:${slot}`;
+      slots.set(key, (slots.get(key) || 0) + 1);
+    }
+    const stem = name.replace(/-(Fast|Default|Max)-(None|Deflate|Gzip|Zstd|Brotli|Auto)\.fic$/, '');
     const expected = readFileSync(join(directory, stem + '.raw'));
-    const actual = decode(source);
+    const actual = await decodeAsync(source);
     assert.deepEqual(Buffer.from(actual.pixels), expected, name);
-    assert.equal(getInfo(source).width, 128);
+    if (source[4] === 0 || source[5] === 0 || source[5] === 3) assert.equal(getInfo(source).width, 128);
+    if (!name.endsWith('-None.fic')) {
+      assert.equal(source[4], name.endsWith('-Fast-Auto.fic') ? 0 : 2);
+      if (source[4] === 2) compressionTypes.add(source[5]);
+      assert.deepEqual(Buffer.from(actual.exif), Buffer.from([73, 73, 42, 0]));
+    }
     decoded++;
   }
+  assert.deepEqual([...compressionTypes].sort(), [0, 1, 2, 3, 4]);
+  const compressed = readdirSync(directory).find(name => name.endsWith('-Zstd.fic') &&
+    readFileSync(join(directory, name))[5] === 3);
+  assert.ok(compressed);
+  assert.throws(() => decode(Buffer.concat([readFileSync(join(directory, compressed)), Buffer.of(0)])), /trailing bytes/);
+  const oversized = Uint8Array.from([70, 73, 67, 0, 1, 1, 0, 0, 0, 0,
+    0x28, 0xb5, 0x2f, 0xfd, 0xa0, 0, 0, 0xc0, 0x12]);
+  assert.throws(() => getInfo(oversized), /content size/);
   for (const name of readdirSync(directory).filter(n => n.endsWith('.raw'))) {
     const pixels = readFileSync(join(directory, name));
     const channels = Number(name.match(/-(\d+)\.raw$/)[1]);
     const encoded = encode(pixels, 128, 96, channels);
+    assert.deepEqual([...encoded.subarray(0, 4)], [70, 73, 67, 0]);
     assert.deepEqual(Buffer.from(decode(encoded).pixels), pixels);
-    writeFileSync(join(directory, name.replace(/\.raw$/, '.js.tfic')), encoded);
+    writeFileSync(join(directory, name.replace(/\.raw$/, '.js.fic')), encoded);
   }
   for (const [name, slot, palette] of [['gm', 2, false], ['pal', 3, true]]) {
     const { pixels, file } = fixture(slot, palette);
     assert.deepEqual(Buffer.from(decode(file).pixels), Buffer.from(pixels));
     writeFileSync(join(directory, `${name}-64-64-3.raw`), pixels);
-    writeFileSync(join(directory, `${name}-64-64-3.js.tfic`), file);
+    writeFileSync(join(directory, `${name}-64-64-3.js.fic`), file);
   }
   execFileSync('dotnet', ['run', '--no-build', '--project', project, '--', 'verify', directory], { stdio: 'inherit' });
   const corrupt = Uint8Array.from(encode(new Uint8Array(128 * 96 * 3), 128, 96, 3));

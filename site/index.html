@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7faf9">
-  <meta name="description" content="Tedd.FIC is a lossless image format with .NET and JavaScript codecs. Convert JPEG, PNG, WebP, and TFIC files in your browser.">
+  <meta name="description" content="Tedd.FIC is a lossless image format with .NET and JavaScript codecs. Convert JPEG, PNG, WebP, and FIC files in your browser.">
   <title>Tedd.FIC — lossless image compression</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -28,7 +28,7 @@
       <div class="hero-inner">
         <p class="eyebrow"><span></span> .NET and JavaScript · lossless RGB &amp; RGBA</p>
         <h1>A new image format<br>for <em>smaller, faster</em> files.</h1>
-        <p class="lede">Tedd.FIC is a lossless image format with .NET and JavaScript codecs. Across 5,000 selected images, the .NET FIC Fast encoder produced <strong>24.6% fewer bytes</strong> than SkiaSharp PNG and used <strong>53× less summed encode time</strong> under the measured eight-worker workload. The format includes a versioned container and optional EXIF metadata.</p>
+        <p class="lede">Tedd.FIC is a lossless image format with .NET and JavaScript codecs. Across 5,000 selected images, the .NET FIC Fast encoder produced <strong>24.6% fewer bytes</strong> than SkiaSharp PNG and used <strong>53× less summed encode time</strong> under the measured eight-worker workload. Optional Deflate, GZip, Zstandard, and Brotli compression can reduce FIC files further.</p>
         <div class="hero-actions">
           <a class="button primary" href="https://www.nuget.org/packages/Tedd.FIC">Get the NuGet package ↗</a>
           <a class="button secondary" href="#convert">Try the converter</a>
@@ -58,7 +58,7 @@
         <section class="chart-card"><h3>Encode speed</h3><p>Megapixels per second · higher is better · JPEG q90 is lossy</p><div data-chart="encode" class="chart-rows"></div></section>
         <section class="chart-card"><h3>Decode speed</h3><p>Megapixels per second · higher is better · JPEG q90 is lossy</p><div data-chart="decode" class="chart-rows"></div></section>
       </div>
-      <p class="caption">Seed 20260926; 1,000 images per folder. AMD Ryzen 9 5950X, Windows, .NET 11 preview, eight independent image workers. Times are summed per-image codec times, not wall-clock duration. Original JPEG files were decoded outside the timings; source metadata was omitted from all output formats. PNG and FIC were verified pixel for pixel. JPEG q90 is lossy; its speed is shown for context, while the size graph compares lossless formats only. <a href="https://github.com/tedd/Tedd.FIC#benchmarks">Full benchmark table and method →</a></p>
+      <p class="caption">Seed 20260926; 1,000 images per folder. AMD Ryzen 9 5950X, Windows, .NET 11 preview, eight independent image workers. These historical FIC measurements used uncompressed outer payloads. Times are summed per-image codec times, not wall-clock duration. Original JPEG files were decoded outside the timings; source metadata was omitted from all output formats. PNG and FIC were verified pixel for pixel. JPEG q90 is lossy; its speed is shown for context, while the size graph compares lossless formats only. <a href="https://github.com/tedd/Tedd.FIC#benchmarks">Full benchmark table and method →</a></p>
     </section>
 
     <section class="section benchmark" id="benchmark">
@@ -81,32 +81,32 @@
     </section>
 
     <section class="section use" id="use">
-      <div class="section-heading"><p class="eyebrow">GET STARTED</p><h2>Use TFIC from .NET or JavaScript</h2><p>Supply interleaved RGB or RGBA bytes in row-major order. The decoder restores the original bytes and dimensions.</p></div>
+      <div class="section-heading"><p class="eyebrow">GET STARTED</p><h2>Use FIC from .NET or JavaScript</h2><p>Supply interleaved RGB or RGBA bytes in row-major order. The decoder restores the original bytes and dimensions.</p></div>
       <div class="code-grid"><div class="code-card"><div class="code-title"><span>INSTALL</span><button data-copy="dotnet add package Tedd.FIC">Copy</button></div><pre><code>dotnet add package Tedd.FIC</code></pre></div>
       <div class="code-card"><div class="code-title"><span>ENCODE &amp; DECODE</span></div><pre><code>using Tedd.FIC;
 
 byte[] file = Fic.Encode(rgb, width, height, 3,
-    effort: FicEffort.Fast);
+    effort: FicEffort.Fast, compression: FicCompression.Auto);
 byte[] pixels = Fic.Decode(file,
     out int w, out int h, out int channels);</code></pre></div></div>
-      <div class="code-card js-example"><div class="code-title"><span>JAVASCRIPT · BROWSER OR NODE.JS</span></div><pre><code>import { encode, decode } from './tfic.js';
+      <div class="code-card js-example"><div class="code-title"><span>JAVASCRIPT · BROWSER OR NODE.JS</span></div><pre><code>import { encode, decode, decodeAsync } from './fic.js';
 
 // rgba is a Uint8Array, four bytes per pixel.
 const file = encode(rgba, width, height, 4);
 const { pixels, width: w, height: h, channels } = decode(file);
 
-// Load a .tfic file from a URL:
-const response = await fetch('image.tfic');
-const loaded = decode(new Uint8Array(await response.arrayBuffer()));</code></pre></div>
-      <p class="caption">The package currently targets .NET 11 preview. The JavaScript decoder accepts Fast and Compact streams from .NET and verifies CRC-32C. The JavaScript encoder writes interoperable Fast-tier literal strips; its output may be larger than the .NET encoder’s optimized output. <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/tfic.js">View the JavaScript module →</a></p>
+// Load a .fic file from a URL:
+const response = await fetch('image.fic');
+const loaded = await decodeAsync(new Uint8Array(await response.arrayBuffer()));</code></pre></div>
+      <p class="caption">The package targets .NET 11 RC1 or later. Auto uses no outer compression for Fast, Zstandard quality 2 for Default, and Brotli quality 5 for Max. Explicit Zstandard at Fast effort uses quality 1. Deflate, GZip, Zstandard, and Brotli are available at every effort. The JavaScript encoder writes interoperable uncompressed Fast-tier literal strips. Browser decoding of Deflate, GZip, and Brotli requires support in <code>DecompressionStream</code>. <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/fic.js">View the JavaScript module →</a></p>
     </section>
 
     <section class="section convert" id="convert">
-      <div class="section-heading"><p class="eyebrow">TRY IT IN YOUR BROWSER</p><h2>Convert an image</h2><p>Upload JPEG, PNG, WebP, or TFIC. Standard images are decoded in the browser and stored as TFIC; TFIC can be downloaded as PNG, WebP, or JPEG. Processing stays in this browser tab.</p></div>
+      <div class="section-heading"><p class="eyebrow">TRY IT IN YOUR BROWSER</p><h2>Convert an image</h2><p>Upload JPEG, PNG, WebP, or FIC. Standard images are decoded in the browser and stored as FIC; FIC can be downloaded as PNG, WebP, or JPEG. Processing stays in this browser tab.</p></div>
       <form id="convert-form" class="converter-card">
         <div class="converter-fields">
-          <label class="file-field" for="convert-file"><span>Choose an image</span><input id="convert-file" type="file" accept=".jpg,.jpeg,.png,.webp,.tfic,image/jpeg,image/png,image/webp" required><small>JPEG · PNG · WebP · TFIC</small></label>
-          <label class="format-field" for="output-format"><span>TFIC output format</span><select id="output-format" disabled><option value="image/png">PNG · lossless</option><option value="image/webp">WebP</option><option value="image/jpeg">JPEG · lossy</option></select></label>
+          <label class="file-field" for="convert-file"><span>Choose an image</span><input id="convert-file" type="file" accept=".jpg,.jpeg,.png,.webp,.fic,image/jpeg,image/png,image/webp" required><small>JPEG · PNG · WebP · FIC</small></label>
+          <label class="format-field" for="output-format"><span>FIC output format</span><select id="output-format" disabled><option value="image/png">PNG · lossless</option><option value="image/webp">WebP</option><option value="image/jpeg">JPEG · lossy</option></select></label>
           <button id="convert-button" class="button primary" type="submit">Convert</button>
         </div>
         <p id="convert-status" class="converter-status" role="status" aria-live="polite">Choose a file to begin.</p>
@@ -122,19 +122,19 @@ const loaded = decode(new Uint8Array(await response.arrayBuffer()));</code></pre
               <div><dt>Size ratio</dt><dd id="stat-ratio"></dd></div>
               <div><dt>Size change</dt><dd id="stat-change"></dd></div>
               <div><dt>Conversion time</dt><dd id="stat-time"></dd></div>
-              <div><dt>TFIC bits / pixel</dt><dd id="stat-bpp"></dd></div>
+              <div><dt>FIC bits / pixel</dt><dd id="stat-bpp"></dd></div>
             </dl>
             <a id="convert-download" class="button primary" download>Download converted file</a>
-            <p class="caption">The ratio compares output bytes with uploaded file bytes. TFIC and PNG preserve decoded pixels. Browser-produced WebP and JPEG may be lossy; JPEG also replaces transparency with white. The converter does not carry metadata into the output file.</p>
+            <p class="caption">The ratio compares output bytes with uploaded file bytes. FIC and PNG preserve decoded pixels. Browser-produced WebP and JPEG may be lossy; JPEG also replaces transparency with white. The converter does not carry metadata into the output file.</p>
           </div>
         </div>
       </form>
     </section>
 
     <section class="section format" id="format">
-      <div class="section-heading"><p class="eyebrow">FILE FORMAT</p><h2>A container with room for metadata</h2><p>Files start with <code>TFIC</code>, followed by a single version byte (<code>00</code>) and an EXIF length. The optional raw EXIF TIFF payload comes before the compressed image data. The pixel stream includes a CRC-32C checksum.</p></div>
-      <div class="format-strip" aria-label="TFIC version 00 file layout"><div><span>0–3</span><strong>TFIC</strong></div><div><span>4</span><strong>00</strong></div><div><span>5–8</span><strong>EXIF length</strong></div><div><span>9…</span><strong>EXIF data</strong></div><div><span>next…</span><strong>Image payload</strong></div></div>
-      <p class="caption">EXIF is preserved as bytes; the library does not interpret its tags. <a href="https://github.com/tedd/Tedd.FIC#container-version-00">Read the container specification →</a></p>
+      <div class="section-heading"><p class="eyebrow">FILE FORMAT</p><h2>A container with room for metadata</h2><p>Version <code>02</code> records one compression byte, EXIF length, and expanded payload length. Compression byte values are 0 = none, 1 = Deflate, 2 = GZip, 3 = Zstandard, and 4 = Brotli. Raw EXIF TIFF bytes come before the image payload; the pixel stream includes a CRC-32C checksum. Versions <code>00</code> and <code>01</code> remain readable.</p></div>
+      <div class="format-strip" aria-label="FIC version 02 file layout"><div><span>0–3</span><strong>FIC + NUL</strong></div><div><span>4</span><strong>02</strong></div><div><span>5</span><strong>Codec</strong></div><div><span>6–9</span><strong>EXIF length</strong></div><div><span>10–13</span><strong>Raw length</strong></div><div><span>14…</span><strong>EXIF + image</strong></div></div>
+      <p class="caption">EXIF is preserved as bytes; the library does not interpret its tags. <a href="https://github.com/tedd/Tedd.FIC#container">Read the container specification →</a></p>
     </section>
   </main>
   <footer><span>TEDD<span class="slash">/</span>FIC</span><p>Lossless image compression · MIT licensed</p><a href="https://github.com/tedd/Tedd.FIC">GitHub ↗</a></footer>

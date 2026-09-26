@@ -4,7 +4,7 @@
     <PackageId>Tedd.FIC</PackageId>
     <Version>0.1.0</Version>
     <Authors>Tedd Hansen</Authors>
-    <Description>FIC is a lossless RGB and RGBA image format for .NET with a versioned container and optional EXIF metadata.</Description>
+    <Description>Lossless RGB and RGBA image format with optional Deflate, GZip, Zstandard, Brotli, and EXIF metadata.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/tedd/Tedd.FIC</PackageProjectUrl>

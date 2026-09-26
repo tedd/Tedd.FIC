@@ -30,15 +30,20 @@ if (args[0] == "generate")
         string basename = $"{pattern}-{w}-{h}-{ch}";
         File.WriteAllBytes(Path.Combine(args[1], basename + ".raw"), pixels);
         foreach (FicEffort effort in Enum.GetValues<FicEffort>())
-            File.WriteAllBytes(Path.Combine(args[1], basename + $"-{effort}.tfic"), Fic.Encode(pixels, w, h, ch, effort));
+        {
+            foreach (FicCompression compression in new[] { FicCompression.None, FicCompression.Deflate, FicCompression.Gzip,
+                FicCompression.Zstd, FicCompression.Brotli, FicCompression.Auto })
+                File.WriteAllBytes(Path.Combine(args[1], basename + $"-{effort}-{compression}.fic"),
+                    Fic.Encode(pixels, w, h, ch, effort, exif: [73, 73, 42, 0], compression: compression));
+        }
     }
 }
 else if (args[0] == "verify")
 {
-    foreach (string path in Directory.GetFiles(args[1], "*.js.tfic"))
+    foreach (string path in Directory.GetFiles(args[1], "*.js.fic"))
     {
         var decoded = Fic.Decode(File.ReadAllBytes(path), out int w, out int h, out int ch);
-        string raw = path[..^".js.tfic".Length] + ".raw";
+        string raw = path[..^".js.fic".Length] + ".raw";
         string[] name = Path.GetFileNameWithoutExtension(raw).Split('-');
         if (w != int.Parse(name[^3]) || h != int.Parse(name[^2]) || ch != int.Parse(name[^1]) ||
             !decoded.SequenceEqual(File.ReadAllBytes(raw)))

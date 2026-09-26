@@ -93,9 +93,9 @@ if (converter) {
   const number = new Intl.NumberFormat('en-US');
   const size = bytes => bytes < 1000 ? `${bytes} B` : bytes < 1e6 ? `${(bytes / 1000).toFixed(2)} kB` : `${(bytes / 1e6).toFixed(2)} MB`;
   const setStat = (id, value) => { document.getElementById(id).textContent = value; };
-  const isTfic = async file => {
+  const isFic = async file => {
     const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
-    return head.length === 5 && head[0] === 84 && head[1] === 70 && head[2] === 73 && head[3] === 67 && head[4] === 0;
+    return head.length === 5 && head[0] === 70 && head[1] === 73 && head[2] === 67 && head[3] === 0 && head[4] <= 2;
   };
   const canvasBlob = (canvas, mime, quality) => new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('The browser could not encode this image.')), mime, quality);
@@ -133,9 +133,9 @@ if (converter) {
     result.hidden = true;
     const file = input.files?.[0];
     if (!file) { status.textContent = 'Choose a file to begin.'; format.disabled = true; return; }
-    const tfic = await isTfic(file);
-    format.disabled = !tfic;
-    status.textContent = tfic ? 'TFIC detected. Choose an output format, then convert.' : 'Image detected. It will be encoded as TFIC.';
+    const fic = await isFic(file);
+    format.disabled = !fic;
+    status.textContent = fic ? 'FIC detected. Choose an output format, then convert.' : 'Image detected. It will be encoded as FIC.';
   });
 
   converter.addEventListener('submit', async event => {
@@ -147,15 +147,14 @@ if (converter) {
     await nextFrame();
     const started = performance.now();
     try {
-      const { encode, decode, getInfo } = await import('./tfic.js');
-      const tfic = await isTfic(file);
+      const { encode, decode, decodeAsync } = await import('./fic.js');
+      const fic = await isFic(file);
       const stem = file.name.replace(/\.[^.]*$/, '') || 'image';
-      let output, outputMime, canvas, width, height, channels, tficBytes;
-      if (tfic) {
+      let output, outputMime, canvas, width, height, channels, ficBytes;
+      if (fic) {
         const source = new Uint8Array(await file.arrayBuffer());
-        const info = getInfo(source);
-        if (info.width * info.height > maxPixels) throw new Error('This browser converter is limited to 24 million pixels.');
-        const decoded = decode(source);
+        const decoded = await decodeAsync(source);
+        if (decoded.width * decoded.height > maxPixels) throw new Error('This browser converter is limited to 24 million pixels.');
         ({ width, height, channels } = decoded);
         canvas = pixelsCanvas(decoded);
         outputMime = format.value;
@@ -169,9 +168,9 @@ if (converter) {
         }
         output = await canvasBlob(canvas, outputMime, outputMime === 'image/webp' ? 1 : 0.92);
         if (output.type !== outputMime) throw new Error(`${outputMime} encoding is unavailable in this browser.`);
-        tficBytes = file.size;
+        ficBytes = file.size;
       } else {
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPEG, PNG, WebP, or TFIC file.');
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPEG, PNG, WebP, or FIC file.');
         const image = await imageCanvas(file);
         width = image.canvas.width; height = image.canvas.height;
         const opaque = image.rgba.every((value, index) => (index & 3) !== 3 || value === 255);
@@ -188,10 +187,10 @@ if (converter) {
         canvas = pixelsCanvas(decoded);
         output = new Blob([fileBytes], { type: 'application/octet-stream' });
         outputMime = 'application/octet-stream';
-        tficBytes = fileBytes.length;
+        ficBytes = fileBytes.length;
       }
-      const ext = tfic ? ({ 'image/png': 'png', 'image/webp': 'webp', 'image/jpeg': 'jpg' })[outputMime] : 'tfic';
-      const previewBlob = tfic ? output : await canvasBlob(canvas, 'image/png');
+      const ext = fic ? ({ 'image/png': 'png', 'image/webp': 'webp', 'image/jpeg': 'jpg' })[outputMime] : 'fic';
+      const previewBlob = fic ? output : await canvasBlob(canvas, 'image/png');
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       if (downloadUrl) URL.revokeObjectURL(downloadUrl);
       previewUrl = URL.createObjectURL(previewBlob);
@@ -200,7 +199,7 @@ if (converter) {
       download.href = downloadUrl;
       download.download = `${stem}.${ext}`;
       document.querySelector('#preview-caption').textContent = `${width} × ${height} preview of converted pixels`;
-      document.querySelector('#result-title').textContent = `${tfic ? 'TFIC' : file.type.split('/')[1].toUpperCase()} → ${ext.toUpperCase()}`;
+      document.querySelector('#result-title').textContent = `${fic ? 'FIC' : file.type.split('/')[1].toUpperCase()} → ${ext.toUpperCase()}`;
       const ratio = output.size / file.size;
       setStat('stat-dimensions', `${number.format(width)} × ${number.format(height)}`);
       setStat('stat-pixels', `${number.format(width * height * channels)} B · ${channels} channels`);
@@ -209,7 +208,7 @@ if (converter) {
       setStat('stat-ratio', `${ratio.toFixed(3)}× · ${(ratio * 100).toFixed(1)}% of source`);
       setStat('stat-change', `${ratio < 1 ? ((1 - ratio) * 100).toFixed(1) + '% smaller' : ((ratio - 1) * 100).toFixed(1) + '% larger'}`);
       setStat('stat-time', `${(performance.now() - started).toFixed(0)} ms`);
-      setStat('stat-bpp', `${(8 * tficBytes / (width * height)).toFixed(2)} bpp`);
+      setStat('stat-bpp', `${(8 * ficBytes / (width * height)).toFixed(2)} bpp`);
       status.textContent = 'Conversion complete.';
       result.hidden = false;
     } catch (error) {

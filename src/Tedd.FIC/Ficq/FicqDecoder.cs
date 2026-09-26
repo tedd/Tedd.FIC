@@ -2,8 +2,11 @@ using System.Buffers;
 
 namespace Tedd.FIC;
 
+/// <summary>Decodes independent FICQ strips and combines their pixel CRCs in image order.</summary>
 internal static unsafe class FicqDecoder
 {
+    /// <summary>Validates the payload and decodes its strips into the caller's buffer.</summary>
+    /// <remarks>Sets info once the header and destination are valid, even if a later strip or checksum fails.</remarks>
     public static bool TryDecode(ReadOnlySpan<byte> data, Span<byte> dst, int threads, bool verifyCrc, out FicImageInfo info, bool simd = true)
     {
         simd = Isa.Use(simd && Isa.Simd);
@@ -43,6 +46,7 @@ internal static unsafe class FicqDecoder
         finally { ArrayPool<uint>.Shared.Return(crcs); }
     }
 
+    /// <summary>Decodes one strip into its assigned image rows and computes its pixel CRC when requested.</summary>
     private static bool Strip(FicqHeader hd, int i, byte* data, long dataLen, byte* dst, bool verifyCrc, bool simd, out uint crc)
     {
         crc = 0;
@@ -75,6 +79,7 @@ internal static unsafe class FicqDecoder
                 }
                 else
                 {
+                    // Byte-mode decoders may read past a payload, so the final strip needs an eight-byte padded copy.
                     byte[] pad = ArrayPool<byte>.Shared.Rent(len + Ficq.Padding);
                     try
                     {
@@ -94,6 +99,7 @@ internal static unsafe class FicqDecoder
         return ok;
     }
 
+    /// <summary>Dispatches a byte-mode strip with readable padding after its payload.</summary>
     private static bool ByteMode(StripCodec c, ReadOnlySpan<byte> src, int s0, Span<byte> dst, int w, int r, int ch, PalTables? pal, bool simd) => c switch
     {
         StripCodec.Pal => PalCodec.Decode(src, s0, dst, w, r, ch, pal!, simd),

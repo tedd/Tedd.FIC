@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Tedd.FIC;
 
+/// <summary>CRC-32C calculation and composition for independently processed strips.</summary>
 internal static class Crc32C
 {
     private const uint Poly = 0x82F63B78; // reflected 0x1EDC6F41
@@ -46,6 +47,7 @@ internal static class Crc32C
         return p;
     }
 
+    /// <summary>Combines CRCs as if B followed A, using B's byte length.</summary>
     public static uint Combine(uint crcA, uint crcB, long lengthB) =>
         lengthB == 0 ? crcA : MultModP(ShiftFor(lengthB), crcA) ^ crcB;
 
@@ -53,6 +55,7 @@ internal static class Crc32C
     [ThreadStatic] private static uint[]? _cacheVal;
     [ThreadStatic] private static int _cacheNext;
 
+    /// <summary>Gets the polynomial shift for a byte length, cached per thread.</summary>
     private static uint ShiftFor(long len)
     {
         var lens = _cacheLen ??= new long[4];
@@ -66,6 +69,7 @@ internal static class Crc32C
         return v;
     }
 
+    /// <summary>Continues an existing CRC over a byte span.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static uint Append(uint crc, ReadOnlySpan<byte> data)
     {
@@ -79,6 +83,7 @@ internal static class Crc32C
         return ~c;
     }
 
+    /// <summary>Computes a CRC with three independent lanes for larger inputs.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static uint Compute(ReadOnlySpan<byte> data)
     {
@@ -110,6 +115,7 @@ internal static class Crc32C
         return Combine(Combine(~a, ~b, part), ~c, data.Length - 2L * part);
     }
 
+    /// <summary>Computes chunk CRCs concurrently when the input is large enough, then combines them in order.</summary>
     public static unsafe uint Compute(ReadOnlySpan<byte> data, int threads)
     {
         const int MinChunk = 1 << 20;

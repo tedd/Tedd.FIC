@@ -6,6 +6,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Tedd.FIC;
 
+/// <summary>Shared MED prediction, Rice modeling, and row transforms for the R0 strip codec.</summary>
 internal static unsafe class R0
 {
     public const int L = 16;
@@ -21,6 +22,7 @@ internal static unsafe class R0
         8, 16, 32, 64, 128, 256, 256, 256,
     ];
 
+    /// <summary>Gets the Rice bit cost of a zigzag residual, including an escape for large quotients.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int RiceBits(int k, int z)
     {
@@ -28,6 +30,7 @@ internal static unsafe class R0
         return q < L ? q + 1 + k : L + 1 + k + 8;
     }
 
+    /// <summary>Computes activity from neighboring residual rows with AVX2.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void Act(byte* zn, byte* znn, ushort* act, int w)
     {
@@ -42,6 +45,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Maps activity to per-pixel Rice parameters for a color plane.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void KRow(int p, ushort* act, byte* k, int w)
     {
@@ -62,6 +66,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Portable activity calculation for a residual row.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ActS(byte* zn, byte* znn, ushort* act, int w)
     {
@@ -82,6 +87,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Portable activity-to-Rice-parameter mapping.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void KRowS(int p, ushort* act, byte* k, int w)
     {
@@ -103,6 +109,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Predicts one channel from west, north, and northwest values.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Med(int W, int N, int NW)
     {
@@ -113,6 +120,7 @@ internal static unsafe class R0
         int b = p - hi; return hi + (b & (b >> 31)); // min(p, hi)
     }
 
+    /// <summary>Applies MED independently to four packed byte channels.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint Med4(uint w, uint n, uint nw) =>
         (uint)Med((int)(w & 255), (int)(n & 255), (int)(nw & 255)) |
@@ -120,6 +128,7 @@ internal static unsafe class R0
         (uint)Med((int)(w >> 16 & 255), (int)(n >> 16 & 255), (int)(nw >> 16 & 255)) << 16 |
         (uint)Med((int)(w >> 24), (int)(n >> 24), (int)(nw >> 24)) << 24;
 
+    /// <summary>Produces planar zigzag residual rows through the portable path.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ZRowsS(int w, uint* cur, uint* prv, byte* z0, byte* z1, byte* z2, byte* z3)
     {
@@ -155,6 +164,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Replicates edge residuals into the row padding read by the activity kernels.</summary>
     public static void PadRow(byte* z, int w)
     {
         z[-1] = z[-2] = z[0];
@@ -165,6 +175,7 @@ internal static unsafe class R0
                                                                           0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
     private static readonly Vector256<int> PlaneGather = Vector256.Create(0, 4, 1, 5, 2, 6, 3, 7);
 
+    /// <summary>Produces planar zigzag residual rows eight pixels at a time with AVX2.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ZRows8(int w, uint* cur, uint* prv, byte* z0, byte* z1, byte* z2, byte* z3)
     {
@@ -198,6 +209,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Produces planar zigzag residual rows with the SSE implementation.</summary>
     public static void ZRows(int w, uint* cur, uint* prv, byte* z0, byte* z1, byte* z2, byte* z3)
     {
         var sel = Vector128.Create((byte)0, 4, 1, 5, 2, 6, 3, 7, 8, 8, 8, 8, 8, 8, 8, 8);
@@ -224,6 +236,7 @@ internal static unsafe class R0
         }
     }
 
+    /// <summary>Writes an unsigned LEB128 length and returns its byte count.</summary>
     public static int PutVarint(byte* p, long v)
     {
         int n = 0;
@@ -232,6 +245,7 @@ internal static unsafe class R0
         return n;
     }
 
+    /// <summary>Reads a minimal unsigned LEB128 length, or -1 for malformed input.</summary>
     public static long GetVarint(byte* p, byte* end, ref int pos)
     {
         long v = 0;
@@ -245,12 +259,15 @@ internal static unsafe class R0
         return -1;
     }
 
+    /// <summary>Gets a padded scratch stride for residual rows and vector reads.</summary>
     public static int RowStride(int w) => Math.Max(w, 64) + 2 * Pad + 64;
 
+    /// <summary>Rounds a native pointer up to a 64-byte boundary.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte* Align64(byte* p) => (byte*)(((nint)p + 63) & ~(nint)63);
 }
 
+/// <summary>Encodes planar MED residuals with adaptive Rice parameters and optional zero-group masks.</summary>
 internal sealed unsafe class R0Encoder
 {
     private const int Pad = R0.Pad;
@@ -261,6 +278,7 @@ internal sealed unsafe class R0Encoder
 
     public bool Masks = true;
 
+    /// <summary>Gets a safe output capacity for one R0 strip.</summary>
     public static long MaxPayload(int w, int rows, int P) => 3 + 15 + (long)w * rows * P * (25 + 8 + 8 + 1) / 8 + (long)rows * P + 64;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -345,6 +363,7 @@ internal sealed unsafe class R0Encoder
 
     private static readonly Vector128<byte> MaskLut = Vector128.Create((byte)0, 1, 3, 7, 15, 31, 63, 127, 255, 255, 255, 255, 255, 255, 255, 255);
 
+    /// <summary>Writes Rice quotients, remainders, and escaped values for one plane row.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void Emit(byte* z, byte* kp, int w, ref Bits st, bool simd)
     {
@@ -403,6 +422,7 @@ internal sealed unsafe class R0Encoder
         st.Qa = qa; st.Ra = ra; st.Qn = qn; st.Rn = rn; st.En = en; st.Qp = qp; st.Rp = rp;
     }
 
+    /// <summary>Encodes a strip and returns the number of payload bytes written.</summary>
     public int Encode(byte* src, int w, int rows, int ch, int P, byte* o, EncScratch? sc = null, bool simd = true)
     {
         long n = (long)w * rows;
@@ -437,6 +457,7 @@ internal sealed unsafe class R0Encoder
         finally { own?.Dispose(); }
     }
 
+    /// <summary>Transforms rows, chooses Rice parameters, and emits the mask, quotient, remainder, and escape streams.</summary>
     private int EncodeCore(byte* src, int w, int rows, int ch, int P, byte* o, int rs, int cap, int gw, byte* zb, byte* kp, byte* zero0,
         ushort* act, uint* plb, byte* zc, byte* kc, ulong* gbits, byte* mo, byte* qo, byte* ro, byte* eo, bool simd)
     {
@@ -573,6 +594,7 @@ internal sealed unsafe class R0Encoder
     }
 }
 
+/// <summary>Validates R0 substreams and reconstructs planar MED-coded strips.</summary>
 internal sealed unsafe class R0Decoder
 {
     private const int L = R0.L;
@@ -609,6 +631,7 @@ internal sealed unsafe class R0Decoder
         }
     }
 
+    /// <summary>Validates an R0 strip, decodes its substreams, and reconstructs the pixels.</summary>
     public bool Decode(byte* data, int len, long avail, int w, int rows, int ch, int P, byte* dst, bool simd = true)
     {
         if (len < 3 || w <= 0 || rows <= 0 || w > Ficq.MaxPlanarWidth || avail < len) return false;
@@ -752,6 +775,7 @@ internal sealed unsafe class R0Decoder
         _nsymDec += coded;
     }
 
+    /// <summary>Consumes each plane row and checks that all coded substreams end at their declared lengths.</summary>
     private bool Run(ulong xv, bool plain0, bool masks, byte* ep, int le, byte* rp, long lr, byte* qp, long lq, int w, int rows, int ch, int P, byte* dst, ref Scr sc)
     {
         byte* zb = sc.Z, kp = sc.K, zero0 = sc.Zero;

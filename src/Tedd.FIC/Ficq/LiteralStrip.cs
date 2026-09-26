@@ -6,12 +6,15 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Tedd.FIC;
 
+/// <summary>Literal, cache-index, delta, and run op codec used as each strip's size fallback.</summary>
 internal static unsafe class LiteralStrip
 {
     public const int MaxRun = 62;
 
+    /// <summary>Gets a safe output-buffer capacity for a given pixel count.</summary>
     public static long MaxEncodedSize(long px) => 5 * px + 16;
 
+    /// <summary>Gets the minimum bytes needed to represent a pixel count with bounded runs.</summary>
     public static long MinPayload(long px) => (px + MaxRun - 1) / MaxRun;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -20,6 +23,7 @@ internal static unsafe class LiteralStrip
         : p < last ? *(uint*)(s + p * 3) | 0xFF000000u
         : *(ushort*)(s + p * 3) | (uint)s[p * 3 + 2] << 16 | 0xFF000000u;
 
+    /// <summary>Encodes one strip with fresh color-cache and previous-pixel state.</summary>
     public static int Encode(byte* src, int w, int rows, int ch, byte* dst)
     {
         uint* ix = stackalloc uint[64];
@@ -63,6 +67,7 @@ internal static unsafe class LiteralStrip
         return (int)o;
     }
 
+    /// <summary>Gets the cost of encoding a changed pixel as a literal or delta op.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LiteralCost(uint px, uint prev)
     {
@@ -79,8 +84,10 @@ internal static unsafe class LiteralStrip
         public long RunLen, Cost;
     }
 
+    /// <summary>Counts exact encoded bytes without materializing the strip.</summary>
     public static long Size(byte* src, int w, int rows, int ch, bool simd) => SizeBelow(src, w, rows, ch, long.MaxValue, simd);
 
+    /// <summary>Counts exact bytes while they can beat limit; may return a lower bound once they cannot.</summary>
     public static long SizeBelow(byte* src, int w, int rows, int ch, long limit, bool simd)
     {
         long n = (long)w * rows;
@@ -117,6 +124,7 @@ internal static unsafe class LiteralStrip
         return st.Cost + (st.RunLen + MaxRun - 1) / MaxRun;
     }
 
+    /// <summary>Counts exact encoded bytes using the scalar reference path.</summary>
     public static long SizeScalar(byte* src, int w, int rows, int ch)
     {
         uint* ix = stackalloc uint[64];
@@ -306,6 +314,7 @@ internal static unsafe class LiteralStrip
         st.Prev = Load(src, (nint)p - 1, ch, (nint)n - 1);
     }
 
+    /// <summary>Decodes a strip and requires the payload to end exactly at the padding boundary.</summary>
     public static bool Decode(ReadOnlySpan<byte> data, int s0, Span<byte> dst, int w, int h, int c)
     {
         if (w <= 0 || h <= 0 || (c != 3 && c != 4) || s0 < 0 || data.Length < s0 + Ficq.Padding || dst.Length < (long)w * h * c) return false;

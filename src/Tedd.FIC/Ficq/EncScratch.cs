@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Tedd.FIC;
 
+/// <summary>Per-worker aligned native buffers, retained on the same thread only within bounded cache limits.</summary>
 internal sealed unsafe class EncScratch : IDisposable
 {
     public const int CandA = 0, CandB = 1, R0 = 2, QpPixels = 3, QpPred = 4, QpMasks = 5, Blk = 6, Count = 7;
@@ -19,6 +20,7 @@ internal sealed unsafe class EncScratch : IDisposable
     private readonly long[] _n = new long[Count];
     private long _total;
 
+    /// <summary>Takes the calling thread's cached scratch, or allocates a new instance.</summary>
     public static EncScratch Rent()
     {
         var s = _cached;
@@ -29,6 +31,7 @@ internal sealed unsafe class EncScratch : IDisposable
         return s;
     }
 
+    /// <summary>Returns scratch to the calling thread's bounded cache or frees it.</summary>
     public static void Return(EncScratch s)
     {
         if (s._total <= RetainBytes && _cached == null)
@@ -42,6 +45,7 @@ internal sealed unsafe class EncScratch : IDisposable
     internal static bool Poison;
     private static int _poisonSeed;
 
+    /// <summary>Gets at least the requested capacity in a 64-byte-aligned slot; contents are unspecified.</summary>
     public byte* Get(int slot, long bytes)
     {
         if (Poison)
@@ -69,6 +73,7 @@ internal sealed unsafe class EncScratch : IDisposable
         return _p[slot];
     }
 
+    /// <summary>Frees the native buffers owned by this instance.</summary>
     public void Dispose()
     {
         Free();
@@ -92,6 +97,7 @@ internal sealed unsafe class EncScratch : IDisposable
         _total = 0;
     }
 
+    /// <summary>Runs each strip action with worker-local scratch and returns all scratch before completion.</summary>
     public static void ForStrips(int n, int threads, Action<int, EncScratch> body)
     {
         if (threads <= 1 || n == 1)
@@ -108,11 +114,13 @@ internal sealed unsafe class EncScratch : IDisposable
     }
 }
 
+/// <summary>Owns an exact-sized native copy of one encoded strip.</summary>
 internal unsafe struct NativePayload : IDisposable
 {
     public byte* Ptr;
     public int Len;
 
+    /// <summary>Copies a strip payload into owned native memory.</summary>
     public static NativePayload Copy(byte* src, int len)
     {
         var p = new NativePayload { Ptr = (byte*)NativeMemory.Alloc((nuint)Math.Max(len, 1)), Len = len };
@@ -122,6 +130,7 @@ internal unsafe struct NativePayload : IDisposable
 
     public readonly ReadOnlySpan<byte> Span => new(Ptr, Len);
 
+    /// <summary>Releases the payload and clears its pointer and length.</summary>
     public void Dispose()
     {
         if (Ptr != null) NativeMemory.Free(Ptr);

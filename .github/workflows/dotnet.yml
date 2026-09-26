@@ -49,5 +49,7 @@ jobs:
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) { throw 'NuGet trusted publishing did not return an API key.' }
-          dotnet nuget push artifacts/packages/*.nupkg --source https://api.nuget.org/v3/index.json --api-key $env:NUGET_API_KEY --skip-duplicate
+          $packages = @(Get-ChildItem -LiteralPath artifacts/packages -Filter '*.nupkg' -File)
+          if ($packages.Count -ne 1) { throw "Expected one NuGet package, found $($packages.Count)." }
+          dotnet nuget push $packages[0].FullName --source https://api.nuget.org/v3/index.json --api-key $env:NUGET_API_KEY --skip-duplicate
           if ($LASTEXITCODE -ne 0) { throw "NuGet publish failed: $LASTEXITCODE" }

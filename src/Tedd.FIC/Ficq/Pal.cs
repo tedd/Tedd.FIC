@@ -5,6 +5,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Tedd.FIC;
 
+/// <summary>Palette literals combined with runs and spatial copy operations.</summary>
 internal static class PalCodec
 {
     public const int MaxK = Ficq.MaxPaletteColours, Classes = Ficq.PaletteClasses;
@@ -14,6 +15,7 @@ internal static class PalCodec
     private static uint Px(ReadOnlySpan<byte> p, int i, int ch) =>
         ch == 4 ? MemoryMarshal.Read<uint>(p[(i * 4)..]) : p[i * 3] | (uint)p[i * 3 + 1] << 8 | (uint)p[i * 3 + 2] << 16 | 0xFF000000u;
 
+    /// <summary>Counts distinct colors and frequencies, stopping all workers when the palette limit is exceeded.</summary>
     public static (uint[] K, int[] C)? Counts(ReadOnlySpan<byte> px, int n, int ch, ref int stop, int max = MaxK)
     {
         Span<uint> key = stackalloc uint[512];
@@ -43,6 +45,7 @@ internal static class PalCodec
         return (k, c);
     }
 
+    /// <summary>Parses a strip into palette literals, runs, and spatial copies.</summary>
     public static List<(int Cls, int L)> Parse(ReadOnlySpan<byte> px, int w, int rows, int ch, uint[] pal, Dictionary<uint, byte> idx)
     {
         int n = w * rows;
@@ -81,6 +84,7 @@ internal static class PalCodec
 
     private static int Leb(int v) { int n = 1; while (v >= 0x80) { v >>= 7; n++; } return n; }
 
+    /// <summary>Chooses short-run code allocations within the remaining one-byte opcode budget.</summary>
     public static byte[]? Shorts(IEnumerable<List<(int Cls, int L)>> strips, int K)
     {
         int budget = 256 - K - Classes;
@@ -109,6 +113,7 @@ internal static class PalCodec
         return shorts.Select(s => (byte)s).ToArray();
     }
 
+    /// <summary>Writes parsed palette operations and returns their byte count.</summary>
     public static int Emit(List<(int Cls, int L)> ops, byte[] shorts, int K, Span<byte> dst)
     {
         Span<int> start = stackalloc int[Classes];
@@ -127,6 +132,7 @@ internal static class PalCodec
         return o;
     }
 
+    /// <summary>Counts bytes needed to emit parsed palette operations.</summary>
     public static int Size(List<(int Cls, int L)> ops, byte[] shorts)
     {
         int o = 0;
@@ -134,6 +140,7 @@ internal static class PalCodec
         return o;
     }
 
+    /// <summary>Decodes a palette strip using the header's validated lookup tables.</summary>
     public static bool Decode(ReadOnlySpan<byte> data, int s0, Span<byte> dst, int w, int h, int ch, PalTables t, bool simd = true) =>
         ch == 3 ? Run<Rgb>(data, s0, dst, w, h, t, Isa.Use(simd)) : Run<Rgba>(data, s0, dst, w, h, t, Isa.Use(simd));
 

@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 
 namespace Tedd.FIC;
 
+/// <summary>Codec selected independently for each FICQ strip.</summary>
 internal enum StripCodec : byte
 {
     R0,
@@ -15,6 +16,7 @@ internal enum StripCodec : byte
     Invalid = 255,
 }
 
+/// <summary>FICQ payload constants and helpers shared by the encoders and decoder.</summary>
 internal static class Ficq
 {
     public const uint Magic = 0x51434946u;
@@ -36,6 +38,7 @@ internal static class Ficq
 
     public const long MaxOutputPerStreamByte = MaxRun * 4 / 3 + 1;
 
+    /// <summary>Maps a strip-table slot to its codec, or Invalid for an unused slot.</summary>
     public static StripCodec SlotCodec(int tier, int slot) => tier switch
     {
         TierFast => slot switch { 0 => StripCodec.NFor, 1 => StripCodec.F0C, 2 => StripCodec.GW, 3 => StripCodec.Literal, _ => StripCodec.Invalid },
@@ -43,20 +46,27 @@ internal static class Ficq
         _ => StripCodec.Invalid,
     };
 
+    /// <summary>Finds the table slot for a codec in the specified tier.</summary>
     public static int CodecSlot(int tier, StripCodec c)
     {
         for (int s = 0; s < 1 << SlotBits; s++) if (SlotCodec(tier, s) == c) return s;
         throw new ArgumentException($"codec {c} is not part of tier {tier}");
     }
 
+    /// <summary>Whether a codec transforms pixels into separate color planes.</summary>
     public static bool IsPlanar(StripCodec c) => c is StripCodec.R0 or StripCodec.NFor or StripCodec.F0C;
 
+    /// <summary>Whether image width is within the planar codecs' supported range.</summary>
     public static bool PlanarWidth(int w) => w >= MinPlanarWidth && w <= MaxPlanarWidth;
 
+    /// <summary>Minimum permitted strip height for an image, capped by its height.</summary>
     public static int MinStripRows(int w, int h) => (int)Math.Min(h, (MinStripPixels + (long)w - 1) / w);
 
+    /// <summary>Packs a payload length and codec slot into one strip-table entry.</summary>
     public static long TableEntry(int len, int slot) => (long)len << SlotBits | (uint)slot;
 
+    /// <summary>Minimum bytes a valid strip of the selected codec needs to represent its pixels.</summary>
+    /// <remarks>The parser uses this bound to reject a claimed output too large for the available payload.</remarks>
     public static long MinPayload(StripCodec c, int w, int rows, int P)
     {
         long px = (long)w * rows;
@@ -92,6 +102,7 @@ internal static class Ficq
     }
 
 
+    /// <summary>Reads a minimal unsigned LEB128 value of at most five bytes, or returns -1 for invalid input.</summary>
     public static long ReadVarint(ReadOnlySpan<byte> d, ref int pos)
     {
         long v = 0;
@@ -105,6 +116,7 @@ internal static class Ficq
         return -1;
     }
 
+    /// <summary>Counts bytes needed for a nonnegative unsigned LEB128 value.</summary>
     public static int VarintLength(long v)
     {
         int n = 1;
@@ -112,6 +124,7 @@ internal static class Ficq
         return n;
     }
 
+    /// <summary>Writes a nonnegative unsigned LEB128 value and returns the byte count.</summary>
     public static int WriteVarint(Span<byte> d, long v)
     {
         int n = 0;
@@ -120,6 +133,7 @@ internal static class Ficq
         return n;
     }
 
+    /// <summary>Writes the FICQ image header, including an optional palette, and returns its byte count.</summary>
     public static int WriteHeader(Span<byte> d, int tier, int w, int h, int ch, int P, int rows, uint[]? palette, byte[]? shorts)
     {
         BinaryPrimitives.WriteUInt32LittleEndian(d, Magic);
@@ -146,6 +160,7 @@ internal static class Ficq
     public const int MaxTableEntry = 5;
 }
 
+/// <summary>Validated FICQ header and strip table. Dispose returns rented tables and palette buffers.</summary>
 internal sealed class FicqHeader : IDisposable
 {
     public int Tier, W, H, Ch, P, Rows, N;
@@ -158,9 +173,11 @@ internal sealed class FicqHeader : IDisposable
     public StripCodec[] Codec = [];
     private bool _rented;
 
+    /// <summary>Gets the actual height of a strip, including a possibly shorter final strip.</summary>
     public int StripRows(int i) => Math.Min(Rows, H - i * Rows);
     public long OutputBytes => (long)W * H * Ch;
 
+    /// <summary>Returns rented strip tables and palette storage.</summary>
     public void Dispose()
     {
         if (_rented)
@@ -176,6 +193,9 @@ internal sealed class FicqHeader : IDisposable
         Codec = [];
     }
 
+    /// <summary>Validates the complete image header and strip table, returning null on malformed input.</summary>
+    /// <remarks>Callers own the returned header and must dispose it. Strip payloads and the pixel checksum are not
+    /// decoded here.</remarks>
     public static FicqHeader? TryParse(ReadOnlySpan<byte> d)
     {
         var h = new FicqHeader();
@@ -184,6 +204,7 @@ internal sealed class FicqHeader : IDisposable
         return null;
     }
 
+    /// <summary>Checks dimensions, flags, palette, strip lengths, and the encoded-to-decoded size bound.</summary>
     private bool Parse(ReadOnlySpan<byte> d)
     {
         if (d.Length < 12 || BinaryPrimitives.ReadUInt32LittleEndian(d) != Ficq.Magic || d[4] != Ficq.Version) return false;
@@ -248,6 +269,7 @@ internal sealed class FicqHeader : IDisposable
     }
 }
 
+/// <summary>Decoded palette and group-op lookup tables backed by pooled arrays.</summary>
 internal sealed class PalTables : IDisposable
 {
     public const uint Valid = 1u << 21;
@@ -256,6 +278,7 @@ internal sealed class PalTables : IDisposable
     public uint[] Grp = [];
     public int K;
 
+    /// <summary>Builds lookup tables from a validated palette header, or returns null for invalid codes.</summary>
     public static PalTables? Build(ReadOnlySpan<byte> palBytes, int k, int ch, ReadOnlySpan<byte> shorts)
     {
         if (k < 1 || k > Ficq.MaxPaletteColours || shorts.Length != Ficq.PaletteClasses || palBytes.Length != k * ch) return null;
@@ -283,6 +306,7 @@ internal sealed class PalTables : IDisposable
         return t;
     }
 
+    /// <summary>Returns palette lookup arrays to the shared pool.</summary>
     public void Dispose()
     {
         if (Pal.Length > 0) ArrayPool<uint>.Shared.Return(Pal);

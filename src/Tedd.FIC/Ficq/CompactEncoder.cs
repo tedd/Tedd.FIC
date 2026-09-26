@@ -6,6 +6,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Tedd.FIC;
 
+/// <summary>Compact-tier codec candidates and their size-versus-decode-time weights.</summary>
 internal sealed record CompactSettings(string Name, QpLayout[] Graphics, double Lambda, double GSlack, int Rows = 64)
 {
     public StripCodec? Force { get; init; }
@@ -26,8 +27,10 @@ internal sealed record CompactSettings(string Name, QpLayout[] Graphics, double 
     public const int SmallPixels = 16384;
 }
 
+/// <summary>Selects compact codecs per strip and optionally writes a shared palette.</summary>
 internal static unsafe class CompactEncoder
 {
+    /// <summary>Estimates decode cost of a strip mode for the encoder's selection score.</summary>
     public static double TimeNs(StripCodec m, long px, long bytes) => m switch
     {
         StripCodec.R0 => 5.0 * px,
@@ -47,6 +50,7 @@ internal static unsafe class CompactEncoder
         public uint Crc;
     }
 
+    /// <summary>Encodes the image payload into a newly allocated FICQ byte array.</summary>
     public static byte[] Encode(ReadOnlySpan<byte> pixels, int w, int h, int ch, CompactSettings s, int threads)
     {
         var parts = EncodeParts(pixels, w, h, ch, s, threads, out var header, out var results, out long total);
@@ -59,6 +63,7 @@ internal static unsafe class CompactEncoder
         finally { Free(results); }
     }
 
+    /// <summary>Assembles a FICQ payload in dst when it fits; reports zero bytes on failure.</summary>
     public static bool TryEncode(ReadOnlySpan<byte> pixels, int w, int h, int ch, CompactSettings s, int threads, Span<byte> dst, out int written)
     {
         var parts = EncodeParts(pixels, w, h, ch, s, threads, out var header, out var results, out long total);
@@ -89,6 +94,7 @@ internal static unsafe class CompactEncoder
         public long PixelBytes;
     }
 
+    /// <summary>Selects each strip mode and determines whether palette savings cover its shared header.</summary>
     private static Parts EncodeParts(ReadOnlySpan<byte> pixelsSpan, int w, int h, int ch, CompactSettings s, int threads,
         out byte[] header, out StripResult[] results, out long total)
     {
@@ -201,6 +207,7 @@ internal static unsafe class CompactEncoder
         }
     }
 
+    /// <summary>Writes the header, strip table, payloads, and ordered header-plus-pixel CRC.</summary>
     private static void Assemble(byte[] header, StripResult[] res, Parts parts, Span<byte> o)
     {
         header.CopyTo(o);
@@ -213,6 +220,7 @@ internal static unsafe class CompactEncoder
     }
 
 
+    /// <summary>Chooses the lowest weighted-cost candidate for one strip, retaining its payload.</summary>
     private static StripResult StripBest(byte* sp, int w, int r, int ch, int P, CompactSettings s, double lambda, List<(int, int)>? pops, byte[]? shorts,
         EncScratch sc)
     {
@@ -324,6 +332,7 @@ internal static unsafe class CompactEncoder
     }
 
 
+    /// <summary>Measures byte equality used to decide whether to try planar coding first.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static double Probe(byte* s, int w, int rows, int ch)
     {
@@ -355,6 +364,7 @@ internal static unsafe class CompactEncoder
 
     private static readonly Vector128<byte> Rgb3to4P = Vector128.Create((byte)0, 1, 2, 128, 3, 4, 5, 128, 6, 7, 8, 128, 9, 10, 11, 128);
 
+    /// <summary>Measures neighboring-pixel equality for the byte-mode trial gate.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static double ProbePx(byte* s, int w, int rows, int ch, bool simd = true)
     {
@@ -399,6 +409,7 @@ internal static unsafe class CompactEncoder
         return tot > 0 ? (double)eq / tot : 1.0;
     }
 
+    /// <summary>Estimates color-cache hits to guide compact codec selection.</summary>
     public static double ProbeHits(byte* s, int w, int rows, int ch)
     {
         long stride = (long)w * ch;

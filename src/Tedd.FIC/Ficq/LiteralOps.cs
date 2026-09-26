@@ -6,8 +6,10 @@ internal interface IPx { static abstract int Ch { get; } }
 internal struct Rgb : IPx { public static int Ch => 3; }
 internal struct Rgba : IPx { public static int Ch => 4; }
 
+/// <summary>Pixel hash and precomputed delta tables shared by literal and byte-mode codecs.</summary>
 internal static class LiteralOps
 {
+    /// <summary>Computes the 64-slot color-cache index from packed RGBA bytes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Hash(uint v)
     {
@@ -15,9 +17,11 @@ internal static class LiteralOps
         return (int)((w * 0x0003_0007_0005_000BUL) >> 48) & 63;
     }
 
+    /// <summary>Reference form of the color-cache hash.</summary>
     public static int HashRef(uint rgba) =>
         (int)(((rgba & 0xff) * 3 + ((rgba >> 8) & 0xff) * 5 + ((rgba >> 16) & 0xff) * 7 + (rgba >> 24) * 11) & 63);
 
+    /// <summary>Adds packed byte channels without carrying between them.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint Swar(uint a, uint b) => ((a & 0x7F7F7F7Fu) + (b & 0x7F7F7F7Fu)) ^ ((a ^ b) & 0x80808080u);
 

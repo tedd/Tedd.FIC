@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Tedd.FIC;
 
+/// <summary>Fast-tier strip selection and trial settings.</summary>
 internal sealed record FastSettings
 {
     public static readonly FastSettings Default = new();
@@ -34,6 +35,7 @@ internal sealed record FastSettings
     public const int LazyRepStep = 8, LazyEstStep = 16;
 }
 
+/// <summary>Encodes independent fast-tier strips, with a literal fallback to bound their size.</summary>
 internal static unsafe class FastEncoder
 {
     internal static long[]? Counts;
@@ -49,6 +51,7 @@ internal static unsafe class FastEncoder
         public int NforLen;
     }
 
+    /// <summary>Encodes the image payload into a newly allocated FICQ byte array.</summary>
     public static byte[] Encode(ReadOnlySpan<byte> pixels, int w, int h, int ch, FastSettings s, int threads)
     {
         var res = EncodeParts(pixels, w, h, ch, s, threads, out var header, out long total, out uint pixCrc);
@@ -61,6 +64,7 @@ internal static unsafe class FastEncoder
         finally { Free(res); }
     }
 
+    /// <summary>Assembles a FICQ payload in dst when it fits; reports zero bytes on failure.</summary>
     public static bool TryEncode(ReadOnlySpan<byte> pixels, int w, int h, int ch, FastSettings s, int threads, Span<byte> dst, out int written)
     {
         var res = EncodeParts(pixels, w, h, ch, s, threads, out var header, out long total, out uint pixCrc);
@@ -80,6 +84,7 @@ internal static unsafe class FastEncoder
         for (int i = 0; i < res.Length; i++) res[i].Payload.Dispose();
     }
 
+    /// <summary>Writes header, strip table, payloads, and the CRC of header plus decoded pixels.</summary>
     private static void Assemble(byte[] header, StripResult[] res, uint pixCrc, long pixBytes, Span<byte> o)
     {
         header.CopyTo(o);
@@ -90,9 +95,11 @@ internal static unsafe class FastEncoder
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(o[op..], crc);
     }
 
+    /// <summary>Raises strip height as needed to satisfy the minimum pixel count on narrow images.</summary>
     internal static int StripRows(int w, int h, int rows, int minStripPixels) =>
         Math.Max(Ficq.MinStripRows(w, h), (int)Math.Min(h, Math.Max(rows, ((long)minStripPixels + w - 1) / w)));
 
+    /// <summary>Selects codecs per strip, computes ordered pixel CRCs, and returns owned strip payloads.</summary>
     private static StripResult[] EncodeParts(ReadOnlySpan<byte> pixelsSpan, int w, int h, int ch, FastSettings s, int threads,
         out byte[] header, out long total, out uint pixCrc)
     {
@@ -170,6 +177,7 @@ internal static unsafe class FastEncoder
     private static long MaxStrip(int w, int r) =>
         Math.Max(Math.Max(BlkCodec.MaxBytes(w, r, 4), QpCodec.MaxEncodedSize(w, r)), LiteralStrip.MaxEncodedSize((long)w * r)) + 64;
 
+    /// <summary>Encodes the N-FOR baseline and gathers evidence for later graphics trials.</summary>
     private static StripResult First(byte* sp, int w, int r, int ch, int P, FastSettings s, bool small, EncScratch sc, long* marks)
     {
         var res = new StripResult { Slot = -1 };
@@ -190,6 +198,7 @@ internal static unsafe class FastEncoder
         return res;
     }
 
+    /// <summary>Tries selected alternatives and applies the literal-strip size guarantee.</summary>
     private static void Second(ref StripResult res, byte* sp, int w, int r, int ch, int P, FastSettings s, double pen, bool small, bool photo, bool pgf, EncScratch sc, long* marks)
     {
         long stride = (long)w * ch;
@@ -267,6 +276,7 @@ internal static unsafe class FastEncoder
         res.Slot = bestSlot;
     }
 
+    /// <summary>Samples the share of pixels equal to a neighboring pixel.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static double RepRate(byte* px, int w, int rows, int ch, int step)
     {
@@ -301,6 +311,7 @@ internal static unsafe class FastEncoder
         return tot == 0 ? 1.0 : (double)hit / tot;
     }
 
+    /// <summary>Estimates byte-mode coding cost from sampled rows for trial selection.</summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static double EstQ(byte* px, int w, int rows, int ch, int step)
     {

@@ -14,6 +14,7 @@ internal struct BaseM : IBase { public static bool Med => true; }
 
 internal enum QpOp : byte { Invalid, Index, Diff, Luma, W3, Run, RunLong, ZRun, ZRunLong, Copy, CopyLong, L2, Alpha, Rgb, Rgba }
 
+/// <summary>Opcode layout and decode tables for the two byte-mode strip variants.</summary>
 internal sealed class QpLayout
 {
     public const int W3Start = 192, GroupStart = 200, L2Start = 246, AlphaStart = 250;
@@ -73,9 +74,11 @@ internal sealed class QpLayout
         Array.Copy(LiteralOps.DeltaLuma2, 0, T, 256, 256);
     }
 
+    /// <summary>Gets the longest one-byte run or copy length for an opcode class.</summary>
     public int ShortOf(int cls) => cls == 0 ? RunShort : cls == 1 ? ZRunShort : CopyShort[cls - 2];
 }
 
+/// <summary>Byte-mode strip codec with a previous-pixel or MED predictor.</summary>
 internal static class QpCodec
 {
     internal static int AbortFirst = 4;
@@ -83,13 +86,16 @@ internal static class QpCodec
 
     internal static int EncoderRunCap = Ficq.MaxRun;
 
+    /// <summary>Gets a safe destination capacity for a byte-mode strip.</summary>
     public static long MaxEncodedSize(int w, int h) => (long)w * h * 6 + 64;
 
     public const int L2Off = 128;
 
+    /// <summary>Maps a packed color to its second-level cache slot.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int L2Slot(uint v) => (int)((v * 0x9E3779B1u) >> 22);
 
+    /// <summary>Computes the packed-channel MED predictor using SIMD instructions.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint Med(uint w, uint n, uint nw)
     {
@@ -101,6 +107,7 @@ internal static class QpCodec
         return r.AsUInt32().ToScalar();
     }
 
+    /// <summary>Scalar equivalent of the packed-channel MED predictor.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint MedS(uint w, uint n, uint nw)
     {
@@ -117,6 +124,7 @@ internal static class QpCodec
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint Med<TK>(uint w, uint n, uint nw) where TK : struct, BlkCodec.IKn => TK.Simd ? Med(w, n, nw) : MedS(w, n, nw);
 
+    /// <summary>Expands a W3 opcode's three channel deltas into packed bytes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint W3Delta(uint v)
     {
@@ -124,6 +132,7 @@ internal static class QpCodec
         return ((dg + drdg) & 255) | (dg & 255) << 8 | ((dg + dbdg) & 255) << 16;
     }
 
+    /// <summary>Decodes a byte-mode strip and checks that every payload byte was consumed.</summary>
     public static bool Decode(QpLayout lay, ReadOnlySpan<byte> data, int s0, Span<byte> dst, int w, int h, int c, bool simd = true)
     {
         if (w <= 0 || h <= 0 || (c != 3 && c != 4) || s0 < 0 || data.Length < s0 + Ficq.Padding || dst.Length < (long)w * h * c) return false;
@@ -137,6 +146,7 @@ internal static class QpCodec
             ? (c == 3 ? Dec<Rgb, BaseM, TK>.Run(lay, data, s0, dst, w, h, out end) : Dec<Rgba, BaseM, TK>.Run(lay, data, s0, dst, w, h, out end))
             : (c == 3 ? Dec<Rgb, BaseW, TK>.Run(lay, data, s0, dst, w, h, out end) : Dec<Rgba, BaseW, TK>.Run(lay, data, s0, dst, w, h, out end));
 
+    /// <summary>Encodes one strip with the requested opcode layout, optionally stopping above a size limit.</summary>
     public static int Encode(QpLayout lay, ReadOnlySpan<byte> pixels, int w, int h, int c, Span<byte> dst, long limit = long.MaxValue, EncScratch? sc = null, bool simd = true)
     {
         if (w <= 0 || h <= 0 || (c != 3 && c != 4)) throw new ArgumentException("shape");

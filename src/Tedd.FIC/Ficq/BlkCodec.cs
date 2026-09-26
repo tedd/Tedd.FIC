@@ -7,6 +7,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Tedd.FIC;
 
+/// <summary>Fixed-width planar block codecs used by the fast tier.</summary>
 internal static unsafe class BlkCodec
 {
     public const int MUp = 9, MFlat = 10, MUpRun = 11, MFlatRun = 12;
@@ -32,8 +33,10 @@ internal static unsafe class BlkCodec
         return p;
     }
 
+    /// <summary>Gets a safe destination capacity for a planar strip.</summary>
     public static long MaxBytes(int w, int h, int P) => (long)P * (w + 8) * (h + 4) * 9 / 8 + 256;
 
+    /// <summary>Returns a 64-byte-aligned row stride with space for vector reads.</summary>
     public static long RowStride(int w)
     {
         long s = (w + 32 + 63) / 64;
@@ -47,6 +50,7 @@ internal static unsafe class BlkCodec
     private static long StrideF0(int w) => OldStride ? (w + 31) & ~15 : RowStride(w);
     private static long StrideN(int w) => OldStride ? (w + 47) & ~15 : RowStride(w + 16);
 
+    /// <summary>Encodes one N-FOR or F0-C strip, optionally recording row bit positions or stopping an F0-C trial.</summary>
     public static int Encode(StripCodec k, byte* src, long srcStride, int w, int h, int ch, int P, byte* dst, EncScratch? sc = null, long* marks = null, long* abortAt = null, bool simd = true)
     {
         _ = PdM; _ = PdM64;
@@ -64,6 +68,7 @@ internal static unsafe class BlkCodec
         finally { own?.Dispose(); }
     }
 
+    /// <summary>Decodes one planar strip, rejecting malformed dimensions, lengths, or coding.</summary>
     public static bool Decode(StripCodec k, byte* s, long len, long avail, byte* dst, long dstStride, int w, int h, int ch, int P, bool simd = true)
     {
         _ = PdM;
@@ -85,6 +90,7 @@ internal static unsafe class BlkCodec
     public struct KSimd : IKn { public static bool Simd => true; }
     public struct KScalar : IKn { public static bool Simd => false; }
 
+    /// <summary>Extracts equal-width low bits from packed byte lanes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong PextB(ulong x, int wd, int bytes)
     {
@@ -94,6 +100,7 @@ internal static unsafe class BlkCodec
         return (x & 0x00000000FFFFFFFFUL) | ((x & 0xFFFFFFFF00000000UL) >> (32 - 4 * wd));
     }
 
+    /// <summary>Deposits four equal-width values into separate byte lanes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static uint PdepB4(ulong v, int wd)
     {

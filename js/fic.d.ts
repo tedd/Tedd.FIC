@@ -1,6 +1,7 @@
 export type ByteInput = ArrayBuffer | ArrayBufferView;
 export type Channels = 3 | 4;
 export type Tier = 'Fast' | 'Compact';
+export type FicCompression = 'None' | 'Deflate' | 'Gzip' | 'Zstd' | 'Brotli' | 'Auto';
 export interface FicInfo {
     width: number;
     height: number;
@@ -19,4 +20,4 @@ export interface DecodedImage {
 export declare function getInfo(input: ByteInput): FicInfo;
 export declare function decode(input: ByteInput): DecodedImage;
 export declare function decodeAsync(input: ByteInput): Promise<DecodedImage>;
-export declare function encode(input: ByteInput, width: number, height: number, channels?: Channels, exifInput?: ByteInput): Uint8Array;
+export declare function encode(input: ByteInput, width: number, height: number, channels?: Channels, exifInput?: ByteInput, compression?: FicCompression): Uint8Array;

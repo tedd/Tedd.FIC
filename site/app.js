@@ -83,6 +83,7 @@ const converter = document.querySelector('#convert-form');
 if (converter) {
   const input = document.querySelector('#convert-file');
   const format = document.querySelector('#output-format');
+  const compression = document.querySelector('#fic-compression');
   const status = document.querySelector('#convert-status');
   const result = document.querySelector('#convert-result');
   const preview = document.querySelector('#convert-preview');
@@ -132,9 +133,10 @@ if (converter) {
   input.addEventListener('change', async () => {
     result.hidden = true;
     const file = input.files?.[0];
-    if (!file) { status.textContent = 'Choose a file to begin.'; format.disabled = true; return; }
+    if (!file) { status.textContent = 'Choose a file to begin.'; format.disabled = true; compression.disabled = false; return; }
     const fic = await isFic(file);
     format.disabled = !fic;
+    compression.disabled = fic;
     status.textContent = fic ? 'FIC detected. Choose an output format, then convert.' : 'Image detected. It will be encoded as FIC.';
   });
 
@@ -150,9 +152,12 @@ if (converter) {
       const { encode, decode, decodeAsync } = await import('./fic.js');
       const fic = await isFic(file);
       const stem = file.name.replace(/\.[^.]*$/, '') || 'image';
-      let output, outputMime, canvas, width, height, channels, ficBytes;
+      let output, outputMime, canvas, width, height, channels, ficBytes, compressionUsed;
+      const compressionNames = ['None', 'Deflate', 'GZip', 'Zstandard', 'Brotli'];
       if (fic) {
         const source = new Uint8Array(await file.arrayBuffer());
+        compressionUsed = source[4] === 1 ? (source[5] === 1 ? 'Zstandard' : 'None') :
+          source[4] === 2 ? compressionNames[source[5]] : 'None';
         const decoded = await decodeAsync(source);
         if (decoded.width * decoded.height > maxPixels) throw new Error('This browser converter is limited to 24 million pixels.');
         ({ width, height, channels } = decoded);
@@ -182,7 +187,10 @@ if (converter) {
             pixels[q++] = image.rgba[p]; pixels[q++] = image.rgba[p + 1]; pixels[q++] = image.rgba[p + 2];
           }
         }
-        const fileBytes = encode(pixels, width, height, channels);
+        const fileBytes = encode(pixels, width, height, channels, new Uint8Array(), compression.value);
+        compressionUsed = fileBytes[4] === 2 ? compressionNames[fileBytes[5]] : 'None';
+        if (compressionUsed === 'None' && compression.value !== 'None' && compression.value !== 'Auto')
+          compressionUsed += ' · requested codec did not reduce size';
         const decoded = decode(fileBytes); // Confirm checksum and make the preview from the output file.
         canvas = pixelsCanvas(decoded);
         output = new Blob([fileBytes], { type: 'application/octet-stream' });
@@ -209,6 +217,7 @@ if (converter) {
       setStat('stat-change', `${ratio < 1 ? ((1 - ratio) * 100).toFixed(1) + '% smaller' : ((ratio - 1) * 100).toFixed(1) + '% larger'}`);
       setStat('stat-time', `${(performance.now() - started).toFixed(0)} ms`);
       setStat('stat-bpp', `${(8 * ficBytes / (width * height)).toFixed(2)} bpp`);
+      setStat('stat-compression', compressionUsed);
       status.textContent = 'Conversion complete.';
       result.hidden = false;
     } catch (error) {

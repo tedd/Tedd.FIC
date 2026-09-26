@@ -38,7 +38,7 @@ jobs:
         run: |
           npm ci --prefix ts
           npm run build --prefix ts
-          git diff --exit-code -- js/fic.js js/fic.d.ts site/fic.js
+          git diff --exit-code -- js/fic.js js/fic.d.ts js/fic.LICENSES.txt site/fic.js site/fic.LICENSES.txt
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.100-rc.1.26425.128

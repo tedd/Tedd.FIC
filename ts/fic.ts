@@ -1,9 +1,11 @@
 // FIC container versions 0–2 / FICQ payload version 2.
 import { decompress as decompressZstd } from './fzstd.js';
+import { compressionCode, compressPayload, decompressPayload } from './outer.js';
 
 export type ByteInput = ArrayBuffer | ArrayBufferView;
 export type Channels = 3 | 4;
 export type Tier = 'Fast' | 'Compact';
+export type FicCompression = 'None' | 'Deflate' | 'Gzip' | 'Zstd' | 'Brotli' | 'Auto';
 
 export interface FicInfo {
   width: number;
@@ -28,6 +30,7 @@ interface Position { pos: number }
 const MAX_PIXELS = 1 << 26;
 const MAX_DIM = 1 << 24;
 const MAX_RUN = 1024;
+const MAX_EXPANDED = 256 * 1024 * 1024;
 const COPIES = [[1, 0], [1, 1], [1, -1], [2, 0], [0, -2], [0, -3], [0, -4], [1, -2], [1, 2]];
 const GM_SHORTS = [6, 3, 3, 3, 2, 2, 3, 3, 2];
 const THRESHOLDS = [[6, 13, 30, 70, 157], [7, 18, 35, 86, 213], [7, 17, 35, 82, 209], [8, 16, 32, 64, 128]];
@@ -168,14 +171,18 @@ function parse(data: ByteInput) {
   const start = prefix + exifLength;
   let q = d.subarray(start);
   const expandedLength = version === 2 ? u32(d, 10) : 0;
-  if (version === 2 && (!expandedLength || expandedLength > 256 * 1024 * 1024)) fail('payload length');
+  if (version === 2 && (!expandedLength || expandedLength > MAX_EXPANDED)) fail('payload length');
   if (version === 2 && compression === 0 && q.length !== expandedLength) fail('payload length');
-  if (version === 2 && compression !== 0 && compression !== 3) fail('use decodeAsync for this compression type');
   if ((version === 1 && compression === 1) || (version === 2 && compression === 3)) {
     const expected = zstdContentSize(q);
     if (version === 2 && expected !== expandedLength) fail('payload length');
     try { q = decompressZstd(q); } catch { fail('Zstandard payload'); }
     if (q.length !== expected) fail('Zstandard content size');
+  }
+  if (version === 2 && (compression === 1 || compression === 2 || compression === 4)) {
+    try { q = decompressPayload(q, compression, expandedLength); }
+    catch { fail('compressed payload'); }
+    if (q.length !== expandedLength) fail('payload length');
   }
   if (q.length < 12 || String.fromCharCode(...q.subarray(0, 4)) !== 'FICQ' || q[4] !== 2 || q[5] > 1) fail('FICQ header');
   const tier = q[5], state = { pos: 6 }, end = q.length - 4;
@@ -511,43 +518,9 @@ export function decode(input: ByteInput): DecodedImage {
     exif: h.exif.slice(), tier: h.tier === 0 ? 'Fast' : 'Compact' };
 }
 
-// Deflate, GZip, and Brotli use the platform's streaming decoder. Zstandard remains synchronous.
+// Retained for callers that already use the asynchronous entry point.
 export async function decodeAsync(input: ByteInput): Promise<DecodedImage> {
-  const d = bytes(input);
-  if (d.length < 14 || d[4] !== 2 || (d[5] !== 1 && d[5] !== 2 && d[5] !== 4))
-    return decode(d);
-  if (String.fromCharCode(...d.subarray(0, 4)) !== 'FIC\0') fail('container header');
-  const exifLength = u32(d, 6), expected = u32(d, 10);
-  if (exifLength > 16 * 1024 * 1024 || exifLength > d.length - 14) fail('EXIF length');
-  if (!expected || expected > 256 * 1024 * 1024) fail('payload length');
-  const format = d[5] === 1 ? 'deflate-raw' : d[5] === 2 ? 'gzip' : 'brotli';
-  const compressed = d.subarray(14 + exifLength);
-  let expanded: Uint8Array;
-  try {
-    const stream = new Blob([Uint8Array.from(compressed)]).stream().pipeThrough(new DecompressionStream(format as CompressionFormat));
-    const reader = stream.getReader(), chunks: Uint8Array[] = [];
-    let total = 0;
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      total += value.length;
-      if (total > expected) { await reader.cancel(); fail('payload length'); }
-      chunks.push(value);
-    }
-    if (total !== expected) fail('payload length');
-    expanded = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) { expanded.set(chunk, offset); offset += chunk.length; }
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Invalid FIC:')) throw error;
-    fail(`${format} payload or unsupported browser decoder`);
-  }
-  const legacy = new Uint8Array(9 + exifLength + expanded.length);
-  legacy.set([70, 73, 67, 0, 0], 0);
-  put32(legacy, 5, exifLength);
-  legacy.set(d.subarray(14, 14 + exifLength), 9);
-  legacy.set(expanded, 9 + exifLength);
-  return decode(legacy);
+  return decode(input);
 }
 
 function encodeLiteral(pixels: Uint8Array, start: number, end: number, channels: Channels) {
@@ -583,7 +556,9 @@ function encodeLiteral(pixels: Uint8Array, start: number, end: number, channels:
   return Uint8Array.from(out);
 }
 
-export function encode(input: ByteInput, width: number, height: number, channels: Channels = 4, exifInput: ByteInput = new Uint8Array()): Uint8Array {
+export function encode(input: ByteInput, width: number, height: number, channels: Channels = 4,
+  exifInput: ByteInput = new Uint8Array(), compression: FicCompression = 'None'): Uint8Array {
+  const code = compressionCode(compression);
   const pixels = bytes(input), exif = bytes(exifInput);
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 ||
       width > MAX_DIM || height > MAX_DIM || width * height > MAX_PIXELS ||
@@ -612,5 +587,16 @@ export function encode(input: ByteInput, width: number, height: number, channels
   let crc = crc32c(Uint8Array.from(header));
   crc = crc32c(pixels, 0, pixels.length, crc);
   put32(result, pos, crc);
-  return result;
+  const payload = result.subarray(9 + exif.length);
+  if (code === 0 || payload.length > MAX_EXPANDED) return result;
+  const compressed = compressPayload(payload, code);
+  const selected = compressed.length < payload.length ? code : 0;
+  const stored = selected ? compressed : payload;
+  const wrapped = new Uint8Array(14 + exif.length + stored.length);
+  wrapped.set([70, 73, 67, 0, 2, selected]);
+  put32(wrapped, 6, exif.length);
+  put32(wrapped, 10, payload.length);
+  wrapped.set(exif, 14);
+  wrapped.set(stored, 14 + exif.length);
+  return wrapped;
 }

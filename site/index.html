@@ -117,13 +117,13 @@ byte[] pixels = Fic.Decode(file,
       <div class="code-card js-example"><div class="code-title"><span>JAVASCRIPT · BROWSER OR NODE.JS</span></div><pre><code>import { encode, decode, decodeAsync } from './fic.js';
 
 // rgba is a Uint8Array, four bytes per pixel.
-const file = encode(rgba, width, height, 4);
+const file = encode(rgba, width, height, 4, new Uint8Array(), 'Zstd');
 const { pixels, width: w, height: h, channels } = decode(file);
 
 // Load a .fic file from a URL:
 const response = await fetch('image.fic');
 const loaded = await decodeAsync(new Uint8Array(await response.arrayBuffer()));</code></pre></div>
-      <p class="caption">The package targets .NET 11 RC1 or later. Auto uses no outer compression for Fast, Zstandard quality 2 for Default, and Brotli quality 5 for Max. Explicit Zstandard at Fast effort uses quality 1. Deflate, GZip, Zstandard, and Brotli are available at every effort. The JavaScript encoder writes interoperable uncompressed Fast-tier literal strips. Browser decoding of Deflate, GZip, and Brotli requires support in <code>DecompressionStream</code>. <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/fic.js">View the JavaScript module →</a></p>
+      <p class="caption">The package targets .NET 11 RC1 or later. Auto uses no outer compression for Fast, Zstandard quality 2 for Default, and Brotli quality 5 for Max. Explicit Zstandard at Fast effort uses quality 1. Deflate, GZip, Zstandard, and Brotli are available at every effort. The JavaScript module encodes and decodes all four outer compression types without browser compression APIs. Its encoder writes Fast-tier literal strips and stores an uncompressed payload when the requested outer codec does not reduce its size. <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/fic.js">View the JavaScript module →</a></p>
     </section>
 
     <section class="section convert" id="convert">
@@ -132,6 +132,7 @@ const loaded = await decodeAsync(new Uint8Array(await response.arrayBuffer()));<
         <div class="converter-fields">
           <label class="file-field" for="convert-file"><span>Choose an image</span><input id="convert-file" type="file" accept=".jpg,.jpeg,.png,.webp,.fic,image/jpeg,image/png,image/webp" required><small>JPEG · PNG · WebP · FIC</small></label>
           <label class="format-field" for="output-format"><span>FIC output format</span><select id="output-format" disabled><option value="image/png">PNG · lossless</option><option value="image/webp">WebP</option><option value="image/jpeg">JPEG · lossy</option></select></label>
+          <label class="format-field" for="fic-compression"><span>FIC compression</span><select id="fic-compression"><option value="Zstd">Zstandard</option><option value="Brotli">Brotli</option><option value="Deflate">Deflate</option><option value="Gzip">GZip</option><option value="None">None</option><option value="Auto">Auto · Fast default</option></select></label>
           <button id="convert-button" class="button primary" type="submit">Convert</button>
         </div>
         <p id="convert-status" class="converter-status" role="status" aria-live="polite">Choose a file to begin.</p>
@@ -148,6 +149,7 @@ const loaded = await decodeAsync(new Uint8Array(await response.arrayBuffer()));<
               <div><dt>Size change</dt><dd id="stat-change"></dd></div>
               <div><dt>Conversion time</dt><dd id="stat-time"></dd></div>
               <div><dt>FIC bits / pixel</dt><dd id="stat-bpp"></dd></div>
+              <div><dt>FIC compression</dt><dd id="stat-compression"></dd></div>
             </dl>
             <a id="convert-download" class="button primary" download>Download converted file</a>
             <p class="caption">The ratio compares output bytes with uploaded file bytes. FIC and PNG preserve decoded pixels. Browser-produced WebP and JPEG may be lossy; JPEG also replaces transparency with white. The converter does not carry metadata into the output file.</p>

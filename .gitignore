@@ -430,4 +430,5 @@ FodyWeavers.xsd
 # Local corpus selections and per-image benchmark data (may contain private file names).
 benchmark-output/
 site-dist/
+ts/.generated/
 .dotnet/

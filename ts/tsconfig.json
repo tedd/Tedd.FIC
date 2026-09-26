@@ -4,12 +4,12 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "rootDir": ".",
-    "outDir": "../js",
+    "outDir": ".generated",
     "strict": true,
     "declaration": true,
     "newLine": "lf",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["fic.ts", "fzstd.d.ts"]
+  "include": ["fic.ts", "outer.ts", "fzstd.d.ts", "wasm.d.ts"]
 }

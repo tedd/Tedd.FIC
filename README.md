@@ -58,14 +58,14 @@ For untrusted files, use `Fic.TryGetInfo` to inspect dimensions before pixel all
 
 ### JavaScript
 
-The [JavaScript module](js/fic.js) works in browsers and Node.js. `decode` handles uncompressed and Zstandard files synchronously, using a bundled Zstandard decoder. `decodeAsync` also handles Deflate, GZip, and Brotli with the platform's `DecompressionStream`; Brotli requires browser support for that format. The module accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes uncompressed version `00` files with Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output.
+The [JavaScript module](js/fic.js) works in browsers and Node.js. `encode` and `decode` support uncompressed, Deflate, GZip, Zstandard, and Brotli payloads without platform compression APIs. `decodeAsync` remains available for existing callers. The module accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output. A requested outer codec is stored only when it reduces the payload size.
 
 The [TypeScript source](ts/fic.ts) generates the official JavaScript module and its [type declarations](js/fic.d.ts). Run `npm ci --prefix ts` and `npm run build --prefix ts` from the repository root.
 
 ```js
 import { encode, decode, decodeAsync, getInfo } from './js/fic.js';
 
-const file = encode(rgba, width, height, 4); // Uint8Array of RGBA pixels
+const file = encode(rgba, width, height, 4, new Uint8Array(), 'Zstd'); // Uint8Array of RGBA pixels
 const info = getInfo(file);                   // dimensions before decoding
 const { pixels, width: w, height: h, channels } = decode(file);
 const response = await fetch('from-dotnet.fic');

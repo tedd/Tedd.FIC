@@ -37,6 +37,7 @@ try {
   let decoded = 0;
   const slots = new Map();
   const compressionTypes = new Set();
+  const jsCompressionTypes = new Set();
   for (const name of readdirSync(directory).filter(n => n.endsWith('.fic'))) {
     const source = readFileSync(join(directory, name));
     assert.deepEqual([...source.subarray(0, 4)], [70, 73, 67, 0]);
@@ -55,7 +56,8 @@ try {
     const expected = readFileSync(join(directory, stem + '.raw'));
     const actual = await decodeAsync(source);
     assert.deepEqual(Buffer.from(actual.pixels), expected, name);
-    if (source[4] === 0 || source[5] === 0 || source[5] === 3) assert.equal(getInfo(source).width, 128);
+    assert.deepEqual(Buffer.from(decode(source).pixels), expected, name);
+    assert.equal(getInfo(source).width, 128);
     if (!name.endsWith('-None.fic')) {
       assert.equal(source[4], name.endsWith('-Fast-Auto.fic') ? 0 : 2);
       if (source[4] === 2) compressionTypes.add(source[5]);
@@ -74,11 +76,20 @@ try {
   for (const name of readdirSync(directory).filter(n => n.endsWith('.raw'))) {
     const pixels = readFileSync(join(directory, name));
     const channels = Number(name.match(/-(\d+)\.raw$/)[1]);
-    const encoded = encode(pixels, 128, 96, channels);
-    assert.deepEqual([...encoded.subarray(0, 4)], [70, 73, 67, 0]);
-    assert.deepEqual(Buffer.from(decode(encoded).pixels), pixels);
-    writeFileSync(join(directory, name.replace(/\.raw$/, '.js.fic')), encoded);
+    for (const compression of ['None', 'Deflate', 'Gzip', 'Zstd', 'Brotli', 'Auto']) {
+      const encoded = encode(pixels, 128, 96, channels, Uint8Array.of(73, 73, 42, 0), compression);
+      assert.deepEqual([...encoded.subarray(0, 4)], [70, 73, 67, 0]);
+      const decoded = decode(encoded);
+      assert.deepEqual(Buffer.from(decoded.pixels), pixels, compression);
+      assert.deepEqual(Buffer.from((await decodeAsync(encoded)).pixels), pixels, compression);
+      assert.deepEqual([...decoded.exif], [73, 73, 42, 0]);
+      if (encoded[4] === 2) jsCompressionTypes.add(encoded[5]);
+      const stem = name.replace(/-(\d+-\d+-\d+)\.raw$/, `-${compression}-$1`);
+      writeFileSync(join(directory, stem + '.raw'), pixels);
+      writeFileSync(join(directory, stem + '.js.fic'), encoded);
+    }
   }
+  assert.deepEqual([...jsCompressionTypes].sort(), [1, 2, 3, 4]);
   for (const [name, slot, palette] of [['gm', 2, false], ['pal', 3, true]]) {
     const { pixels, file } = fixture(slot, palette);
     assert.deepEqual(Buffer.from(decode(file).pixels), Buffer.from(pixels));
@@ -89,6 +100,14 @@ try {
   const corrupt = Uint8Array.from(encode(new Uint8Array(128 * 96 * 3), 128, 96, 3));
   corrupt[corrupt.length - 1] ^= 1;
   assert.throws(() => decode(corrupt), /checksum/);
+  assert.throws(() => encode(new Uint8Array(3), 1, 1, 3, new Uint8Array(), 'Unknown'), /compression type/);
+  const bounded = encode(new Uint8Array(128 * 96 * 3), 128, 96, 3, new Uint8Array(), 'Deflate');
+  assert.equal(bounded[5], 1);
+  bounded[10] = 1; bounded[11] = bounded[12] = bounded[13] = 0;
+  assert.throws(() => decode(bounded), /payload length/);
+  const fallback = encode(Uint8Array.of(1, 2, 3), 1, 1, 3, new Uint8Array(), 'Gzip');
+  assert.equal(fallback[4], 2);
+  assert.equal(fallback[5], 0);
   for (const [width, height, channels] of [[1, 1, 3], [2, 100, 4], [17, 31, 3]]) {
     const pixels = Uint8Array.from({ length: width * height * channels }, (_, i) => i * 31 & 255);
     const exif = Uint8Array.of(73, 73, 42, 0);
@@ -98,7 +117,7 @@ try {
     assert.deepEqual(result.exif, exif);
     assert.equal(getInfo(file).exifLength, exif.length);
   }
-  console.log(`Verified ${decoded} .NET streams and 12 JavaScript streams across both decoders. First-strip slots: ${[...slots].map(([key, count]) => `${key}=${count}`).join(', ')}`);
+  console.log(`Verified ${decoded} .NET streams and 62 JavaScript streams across both decoders. First-strip slots: ${[...slots].map(([key, count]) => `${key}=${count}`).join(', ')}`);
 } finally {
   rmSync(directory, { recursive: true, force: true });
 }

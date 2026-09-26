@@ -33,8 +33,12 @@ def main() -> None:
     OUTPUT.mkdir()
 
     data_name = write_fingerprinted("benchmark-data.json", (SOURCE / "benchmark-data.json").read_bytes())
+    codec = (SOURCE / "tfic.js").read_bytes()
+    codec_name = write_fingerprinted("tfic.js", codec)
+    (OUTPUT / "tfic.js").write_bytes(codec)  # Stable URL for the documented import.
     script = (SOURCE / "app.js").read_text(encoding="utf-8")
     script = replace_once(script, "fetch('benchmark-data.json')", f"fetch('{data_name}')")
+    script = replace_once(script, "import('./tfic.js')", f"import('./{codec_name}')")
     script_name = write_fingerprinted("app.js", script.encode("utf-8"))
     style_name = write_fingerprinted("styles.css", (SOURCE / "styles.css").read_bytes())
 
@@ -44,7 +48,7 @@ def main() -> None:
     (OUTPUT / "index.html").write_text(html, encoding="utf-8")
 
     for item in SOURCE.iterdir():
-        if item.is_file() and item.name not in {"index.html", "app.js", "styles.css", "benchmark-data.json"}:
+        if item.is_file() and item.name not in {"index.html", "app.js", "styles.css", "benchmark-data.json", "tfic.js"}:
             shutil.copy2(item, OUTPUT / item.name)
 
     print(f"Built {OUTPUT}")

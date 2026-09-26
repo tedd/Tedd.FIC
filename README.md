@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Tedd.FIC.svg)](https://www.nuget.org/packages/Tedd.FIC)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Tedd.FIC.svg)](https://www.nuget.org/packages/Tedd.FIC)
 
-Tedd.FIC is a .NET library and new lossless image format for tightly packed RGB and RGBA pixels. Its independent strips can encode and decode in parallel. The file container starts with `TFIC` and version byte `00`, and can preserve EXIF metadata.
+Tedd.FIC is a lossless image format for tightly packed RGB and RGBA pixels, with a .NET library and a JavaScript module. Its independent strips can encode and decode in parallel in .NET. The file container starts with `TFIC` and version byte `00`, and can preserve EXIF metadata.
 
 Across the 5,000-image corpus below, FIC Fast produced **24.6% fewer bytes** than SkiaSharp PNG and spent **53× less aggregate time encoding** the same decoded pixels. Results depend on image content, codec settings, hardware, and runtime; run the included benchmark on representative images before making a format choice.
 
@@ -40,6 +40,20 @@ if (Fic.TryGetExif(file, out ReadOnlySpan<byte> exif))
 ```
 
 For untrusted files, use `Fic.TryGetInfo` to inspect dimensions before allocation, or `Fic.Decode` with a suitable `maxPixels` limit. `Fic.TryDecode` writes into a caller-owned buffer and verifies the pixel checksum by default.
+
+### JavaScript
+
+The dependency-free [JavaScript module](site/tfic.js) works in browsers and Node.js. It accepts all current Fast and Compact strip codecs and verifies the pixel CRC-32C. Its encoder writes Fast-tier literal strips, so its output may be larger than the optimized .NET encoder's output.
+
+```js
+import { encode, decode, getInfo } from './tfic.js';
+
+const file = encode(rgba, width, height, 4); // Uint8Array of RGBA pixels
+const info = getInfo(file);                   // dimensions before decoding
+const { pixels, width: w, height: h, channels } = decode(file);
+```
+
+The [browser converter](http://tedd.no/Tedd.FIC/#convert) accepts JPEG, PNG, WebP, and TFIC files. It reports actual file-size ratios, displays the converted image, and provides a download. Browser-produced WebP and JPEG may be lossy.
 
 ## Container version 00
 

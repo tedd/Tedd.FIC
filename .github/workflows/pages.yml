@@ -2,9 +2,10 @@ name: GitHub Pages
 
 on:
   push:
-    branches: [deploy]
+    branches: [main]
     paths:
       - site/**
+      - tests/**
       - tools/build_site.py
       - .github/workflows/pages.yml
   workflow_dispatch:
@@ -28,6 +29,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 11.0.100-preview.7.26381.103
+      - name: Check JavaScript and .NET interoperability
+        run: node tests/tfic.test.mjs
       - uses: actions/configure-pages@v5
       - run: python tools/build_site.py
       - uses: actions/upload-pages-artifact@v3

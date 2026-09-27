@@ -81,6 +81,10 @@ tbody tr:not(.highlight):hover{background:#f6faf9}
 .code-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:1rem}
 .code-card{overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--night);color:#ecf9f5}
 .js-example{margin-top:1rem}
+.native-source{max-width:1050px;margin-top:1.5rem;padding:1.1rem 1.25rem;border:1px solid var(--line);border-radius:12px;background:#fff}
+.native-source h3{margin:0 0 .5rem;font:700 1.05rem var(--display)}
+.native-source p{margin:.55rem 0 0;color:var(--muted);font-size:.88rem;line-height:1.6}
+.native-source a{color:var(--aqua);text-decoration:underline;text-underline-offset:3px}
 .code-title{display:flex;justify-content:space-between;align-items:center;min-height:44px;padding:.6rem 1rem;border-bottom:1px solid #ffffff2b;color:#a5d9cd;font:600 .7rem var(--display);letter-spacing:.1em}
 .code-title button{border:1px solid #ffffff4d;border-radius:5px;padding:.22rem .55rem;background:transparent;color:#d8f1ea;font-size:.7rem}
 pre{overflow:auto;margin:0;padding:1.25rem;font-size:.83rem;line-height:1.65}

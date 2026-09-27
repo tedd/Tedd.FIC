@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7faf9">
-  <meta name="description" content="Tedd.FIC is a lossless image format with .NET and JavaScript codecs. Convert JPEG, PNG, WebP, and FIC files in your browser.">
+  <meta name="description" content="Tedd.FIC is a lossless image format with .NET, TypeScript/JavaScript, C, and 32-bit x86 and 64-bit x64 assembly implementations. Convert images in your browser.">
   <title>Tedd.FIC — lossless image compression</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -26,9 +26,9 @@
     <section class="hero" id="top">
       <div class="hero-grid" aria-hidden="true"></div>
       <div class="hero-inner">
-        <p class="eyebrow"><span></span> .NET and JavaScript · lossless RGB &amp; RGBA</p>
+        <p class="eyebrow"><span></span> .NET · TypeScript/JavaScript · C · x86/x64 assembly</p>
         <h1>A new image format<br>for <em>smaller, faster</em> files.</h1>
-        <p class="lede">Tedd.FIC is a lossless image format with .NET and JavaScript codecs. Across 5,000 selected images, the .NET FIC Fast encoder produced <strong>24.6% fewer bytes</strong> than SkiaSharp PNG and used <strong>53× less summed encode time</strong> under the measured eight-worker workload. Optional Deflate, GZip, Zstandard, and Brotli compression can reduce FIC files further.</p>
+        <p class="lede">Tedd.FIC is a lossless image format with .NET, TypeScript/JavaScript, C, and x86/x64 assembly implementations. Across 5,000 selected images, the .NET FIC Fast encoder produced <strong>24.6% fewer bytes</strong> than SkiaSharp PNG and used <strong>53× less summed encode time</strong> under the measured eight-worker workload. Optional Deflate, GZip, Zstandard, and Brotli compression can reduce FIC files further.</p>
         <div class="hero-actions">
           <a class="button primary" href="https://www.nuget.org/packages/Tedd.FIC">Get the NuGet package ↗</a>
           <a class="button secondary" href="#convert">Try the converter</a>
@@ -106,7 +106,7 @@
     </section>
 
     <section class="section use" id="use">
-      <div class="section-heading"><p class="eyebrow">GET STARTED</p><h2>Use FIC from .NET or JavaScript</h2><p>Supply interleaved RGB or RGBA bytes in row-major order. The decoder restores the original bytes and dimensions.</p></div>
+      <div class="section-heading"><p class="eyebrow">GET STARTED</p><h2>Use FIC from .NET, TypeScript/JavaScript, C, or assembly</h2><p>Supply interleaved RGB or RGBA bytes in row-major order. The decoder restores the original bytes and dimensions.</p></div>
       <div class="code-grid"><div class="code-card"><div class="code-title"><span>INSTALL</span><button data-copy="dotnet add package Tedd.FIC">Copy</button></div><pre><code>dotnet add package Tedd.FIC</code></pre></div>
       <div class="code-card"><div class="code-title"><span>ENCODE &amp; DECODE</span></div><pre><code>using Tedd.FIC;
 
@@ -123,7 +123,12 @@ const { pixels, width: w, height: h, channels } = decode(file);
 // Load a .fic file from a URL:
 const response = await fetch('image.fic');
 const loaded = await decodeAsync(new Uint8Array(await response.arrayBuffer()));</code></pre></div>
-      <p class="caption">The package targets .NET 11 RC1 or later. Auto uses no outer compression for Fast, Zstandard quality 2 for Default, and Brotli quality 5 for Max. Explicit Zstandard at Fast effort uses quality 1. Deflate, GZip, Zstandard, and Brotli are available at every effort. The JavaScript module encodes and decodes all four outer compression types without browser compression APIs. Its encoder writes Fast-tier literal strips and stores an uncompressed payload when the requested outer codec does not reduce its size. <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/fic.js">View the JavaScript module →</a></p>
+      <p class="caption">The package targets .NET 11 RC1 or later. Auto uses no outer compression for Fast, Zstandard quality 2 for Default, and Brotli quality 5 for Max. Explicit Zstandard at Fast effort uses quality 1. Deflate, GZip, Zstandard, and Brotli are available at every effort. The JavaScript module encodes and decodes all four outer compression types without browser compression APIs. Its encoder writes Fast-tier literal strips and stores an uncompressed payload when the requested outer codec does not reduce its size. The <a href="https://github.com/tedd/Tedd.FIC/blob/main/ts/fic.ts">TypeScript source</a> builds the <a href="https://github.com/tedd/Tedd.FIC/blob/main/js/fic.js">JavaScript module</a> and type declarations.</p>
+      <div class="native-source">
+        <h3>Native source</h3>
+        <p><a href="https://github.com/tedd/Tedd.FIC/tree/main/c">C codec</a> — a CMake build with a C API for encoding and decoding. Its encoder writes uncompressed version <code>00</code> files; compressed decoding uses a caller-supplied decompression callback.</p>
+        <p><a href="https://github.com/tedd/Tedd.FIC/blob/main/asm/fic_x86.asm">32-bit x86 assembly</a> and <a href="https://github.com/tedd/Tedd.FIC/blob/main/asm/fic_x64.asm">64-bit x64 assembly</a> — Windows assembly listings with a shared <a href="https://github.com/tedd/Tedd.FIC/blob/main/asm/fic.h">C interface</a> and <a href="https://github.com/tedd/Tedd.FIC/blob/main/asm/build.ps1">build script</a>. Their encoders write uncompressed Fast-tier files; decoding compressed files requires a caller-supplied callback.</p>
+      </div>
     </section>
 
     <section class="section convert" id="convert">

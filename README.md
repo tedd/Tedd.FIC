@@ -165,28 +165,28 @@ dotnet run --project src/Tedd.FIC.Benchmark/Tedd.FIC.Benchmark.csproj -c Release
 
 ### Synthetic reference
 
-Measured on Windows 10.0.26200, .NET 11.0 preview, 32 logical processors, 512×512 RGBA synthetic images. Each cell is the median of five timed runs after one warmup. Encoding includes allocation of the output buffer; decoding includes materializing pixels. The benchmark checks lossless round trips. JPEG at quality 90 is lossy, so its sizes are **not** directly comparable as equivalent output quality.
+Measured on AMD Ryzen 9 5950X, Windows 10.0.26200, .NET 11 RC1, 512×512 RGBA synthetic images. Each cell is the median of three launches, each with 100 warmups and seven timed repetitions per operation. FIC used no outer compression. Encoding includes allocation of the output buffer; decoding includes materializing pixels. The benchmark checks lossless round trips. JPEG at quality 90 is lossy, so its sizes are **not** directly comparable as equivalent output quality.
 
 | Image | Codec | Bytes | Encode ms | Decode ms |
 | --- | --- | ---: | ---: | ---: |
-| Gradient | FIC Fast | 292,045 | 2.058 | 3.239 |
-| Gradient | FIC Default | 235,802 | 4.441 | 4.753 |
-| Gradient | ImageSharp PNG | 391,293 | 98.285 | 11.279 |
-| Gradient | SkiaSharp PNG | 353,053 | 71.804 | 4.664 |
-| Gradient | ImageSharp JPEG q90 | 63,462 | 9.115 | 7.044 |
-| Gradient | SkiaSharp JPEG q90 | 58,310 | 5.032 | 4.020 |
-| Graphics | FIC Fast | 1,977 | 1.978 | 0.153 |
-| Graphics | FIC Default | 1,633 | 1.821 | 0.105 |
-| Graphics | ImageSharp PNG | 2,368 | 5.509 | 1.026 |
-| Graphics | SkiaSharp PNG | 2,426 | 10.336 | 2.111 |
-| Graphics | ImageSharp JPEG q90 | 7,352 | 4.914 | 6.621 |
-| Graphics | SkiaSharp JPEG q90 | 3,686 | 3.192 | 2.726 |
-| Noise | FIC Fast | 835,271 | 2.919 | 3.362 |
-| Noise | FIC Default | 934,915 | 14.806 | 6.774 |
-| Noise | ImageSharp PNG | 900,102 | 52.093 | 5.068 |
-| Noise | SkiaSharp PNG | 918,060 | 49.049 | 8.156 |
-| Noise | ImageSharp JPEG q90 | 235,387 | 5.369 | 5.322 |
-| Noise | SkiaSharp JPEG q90 | 216,215 | 11.513 | 7.515 |
+| Gradient | FIC Fast | 292,045 | 1.920 | 0.680 |
+| Gradient | FIC Default | 235,802 | 1.154 | 1.052 |
+| Gradient | ImageSharp PNG | 391,293 | 112.318 | 5.762 |
+| Gradient | SkiaSharp PNG | 353,053 | 88.311 | 6.395 |
+| Gradient | ImageSharp JPEG q90 | 63,462 | 2.973 | 2.197 |
+| Gradient | SkiaSharp JPEG q90 | 58,310 | 6.798 | 5.156 |
+| Graphics | FIC Fast | 1,977 | 1.420 | 0.075 |
+| Graphics | FIC Default | 1,633 | 2.735 | 0.079 |
+| Graphics | ImageSharp PNG | 2,368 | 7.545 | 1.260 |
+| Graphics | SkiaSharp PNG | 2,426 | 15.735 | 2.569 |
+| Graphics | ImageSharp JPEG q90 | 7,352 | 1.454 | 1.006 |
+| Graphics | SkiaSharp JPEG q90 | 3,686 | 4.496 | 2.953 |
+| Noise | FIC Fast | 835,271 | 1.899 | 0.662 |
+| Noise | FIC Default | 934,915 | 7.544 | 2.300 |
+| Noise | ImageSharp PNG | 900,102 | 64.602 | 5.587 |
+| Noise | SkiaSharp PNG | 918,060 | 50.227 | 8.072 |
+| Noise | ImageSharp JPEG q90 | 235,387 | 5.566 | 4.350 |
+| Noise | SkiaSharp JPEG q90 | 216,215 | 10.901 | 6.856 |
 
 The benchmark uses ImageSharp 3.1.12 and SkiaSharp 4.151.2. Run it with:
 

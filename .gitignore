@@ -432,3 +432,6 @@ benchmark-output/
 site-dist/
 ts/.generated/
 .dotnet/
+
+# Versioned performance investigations retain their raw command logs.
+!Research/**/*.log

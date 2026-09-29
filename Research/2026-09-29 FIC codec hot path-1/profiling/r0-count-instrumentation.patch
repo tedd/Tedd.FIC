@@ -1,0 +1,25 @@
+diff --git a/src/Tedd.FIC/Ficq/R0.cs b/src/Tedd.FIC/Ficq/R0.cs
+index 11f21f2..c1f67a2 100644
+--- a/src/Tedd.FIC/Ficq/R0.cs
++++ b/src/Tedd.FIC/Ficq/R0.cs
+@@ -270,6 +270,7 @@ internal static unsafe class R0
+ /// <summary>Encodes planar MED residuals with adaptive Rice parameters and optional zero-group masks.</summary>
+ internal sealed unsafe class R0Encoder
+ {
++    internal static long DebugGroups, DebugZero, DebugQuotientZero, DebugHigh;
+     private const int Pad = R0.Pad;
+     private readonly int[] _hist = new int[4 * 256];
+
+@@ -379,8 +380,12 @@ internal sealed unsafe class R0Encoder
+             var zv = Avx2.ConvertToVector256Int32(z + x).AsUInt32();
+             var kv = Avx2.ConvertToVector256Int32(kp + x).AsUInt32();
+             var qv = Avx2.ShiftRightLogicalVariable(zv, kv);
++            DebugGroups++;
++            if (*(ulong*)(z + x) == 0) DebugZero++;
++            if (Vector256.EqualsAll(qv, Vector256<uint>.Zero)) DebugQuotientZero++;
+             if (!Vector256.LessThanOrEqualAll(qv, fifteen))
+             {
++                DebugHigh++;
+                 for (int j = 0; j < 8; j++)
+                 {
+                     int zz = z[x + j], k = kp[x + j];

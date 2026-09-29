@@ -91,18 +91,21 @@
       <div class="table-wrap"><table>
         <thead><tr><th>Image</th><th>Codec</th><th>Bytes</th><th>Encode</th><th>Decode</th></tr></thead>
         <tbody>
-          <tr class="highlight"><td>Gradient</td><td>FIC Fast</td><td>292,045</td><td>2.06 ms</td><td>3.24 ms</td></tr>
-          <tr><td>Gradient</td><td>ImageSharp PNG</td><td>391,293</td><td>98.29 ms</td><td>11.28 ms</td></tr>
-          <tr><td>Gradient</td><td>SkiaSharp PNG</td><td>353,053</td><td>71.80 ms</td><td>4.66 ms</td></tr>
-          <tr class="highlight"><td>Graphics</td><td>FIC Fast</td><td>1,977</td><td>1.98 ms</td><td>0.15 ms</td></tr>
-          <tr><td>Graphics</td><td>ImageSharp PNG</td><td>2,368</td><td>5.51 ms</td><td>1.03 ms</td></tr>
-          <tr><td>Graphics</td><td>SkiaSharp PNG</td><td>2,426</td><td>10.34 ms</td><td>2.11 ms</td></tr>
-          <tr class="highlight"><td>Noise</td><td>FIC Fast</td><td>835,271</td><td>2.92 ms</td><td>3.36 ms</td></tr>
-          <tr><td>Noise</td><td>ImageSharp PNG</td><td>900,102</td><td>52.09 ms</td><td>5.07 ms</td></tr>
-          <tr><td>Noise</td><td>SkiaSharp PNG</td><td>918,060</td><td>49.05 ms</td><td>8.16 ms</td></tr>
+          <tr class="highlight"><td>Gradient</td><td>FIC Fast</td><td>292,045</td><td>1.92 ms</td><td>0.68 ms</td></tr>
+          <tr class="highlight"><td>Gradient</td><td>FIC Default</td><td>235,802</td><td>1.15 ms</td><td>1.05 ms</td></tr>
+          <tr><td>Gradient</td><td>ImageSharp PNG</td><td>391,293</td><td>112.32 ms</td><td>5.76 ms</td></tr>
+          <tr><td>Gradient</td><td>SkiaSharp PNG</td><td>353,053</td><td>88.31 ms</td><td>6.40 ms</td></tr>
+          <tr class="highlight"><td>Graphics</td><td>FIC Fast</td><td>1,977</td><td>1.42 ms</td><td>0.08 ms</td></tr>
+          <tr class="highlight"><td>Graphics</td><td>FIC Default</td><td>1,633</td><td>2.74 ms</td><td>0.08 ms</td></tr>
+          <tr><td>Graphics</td><td>ImageSharp PNG</td><td>2,368</td><td>7.55 ms</td><td>1.26 ms</td></tr>
+          <tr><td>Graphics</td><td>SkiaSharp PNG</td><td>2,426</td><td>15.74 ms</td><td>2.57 ms</td></tr>
+          <tr class="highlight"><td>Noise</td><td>FIC Fast</td><td>835,271</td><td>1.90 ms</td><td>0.66 ms</td></tr>
+          <tr class="highlight"><td>Noise</td><td>FIC Default</td><td>934,915</td><td>7.54 ms</td><td>2.30 ms</td></tr>
+          <tr><td>Noise</td><td>ImageSharp PNG</td><td>900,102</td><td>64.60 ms</td><td>5.59 ms</td></tr>
+          <tr><td>Noise</td><td>SkiaSharp PNG</td><td>918,060</td><td>50.23 ms</td><td>8.07 ms</td></tr>
         </tbody>
       </table></div>
-      <p class="caption">Synthetic 512×512 RGBA images on Windows 10.0.26200 with .NET 11 preview and 32 logical processors. Median of five timed repetitions after warmup. ImageSharp 3.1.12 and SkiaSharp 4.151.2. <a href="https://github.com/tedd/Tedd.FIC#benchmarks">Full results, including JPEG, and reproduction steps →</a></p>
+      <p class="caption">Synthetic 512×512 RGBA images on AMD Ryzen 9 5950X, Windows 10.0.26200, .NET 11 RC1. FIC used no outer compression. Each cell is the median of three launches, each with 100 warmups and seven timed repetitions per operation. ImageSharp 3.1.12 and SkiaSharp 4.151.2. <a href="https://github.com/tedd/Tedd.FIC#benchmarks">Full results, including JPEG, and reproduction steps →</a></p>
     </section>
 
     <section class="section use" id="use">

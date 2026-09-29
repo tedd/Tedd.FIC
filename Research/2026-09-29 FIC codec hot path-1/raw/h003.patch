@@ -1,0 +1,82 @@
+diff --git a/src/Tedd.FIC/Ficq/Qp.cs b/src/Tedd.FIC/Ficq/Qp.cs
+index 9ee0638..32e891e 100644
+--- a/src/Tedd.FIC/Ficq/Qp.cs
++++ b/src/Tedd.FIC/Ficq/Qp.cs
+@@ -793,7 +793,8 @@ internal static class QpCodec
+                     uint b = TB.Med ? Unsafe.Add(ref P, k) : prev;
+                     if (((px ^ b) >> 24) == 0)
+                     {
+-                        if (ColourCost(px, b) > 2)
++                        int colourLength = ColourCode(px, b, out uint colourCode);
++                        if (colourLength > 2)
+                         {
+                             int sl = L2Slot(px);
+                             ref uint l2 = ref Unsafe.Add(ref L2, sl);
+@@ -803,9 +804,9 @@ internal static class QpCodec
+                                 Unsafe.Add(ref dst, o + 1) = (byte)sl;
+                                 o += 2;
+                             }
+-                            else { o = Colour(ref dst, o, px, b); l2 = px; }
++                            else { WriteColour(ref dst, o, colourCode, colourLength); o += colourLength; l2 = px; }
+                         }
+-                        else o = Colour(ref dst, o, px, b);
++                        else { WriteColour(ref dst, o, colourCode, colourLength); o += colourLength; }
+                     }
+                     else
+                     {
+@@ -910,31 +911,47 @@ internal static class QpCodec
+
+         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+         private static nint Colour(ref byte dst, nint o, uint px, uint b)
++        {
++            int length = ColourCode(px, b, out uint code);
++            WriteColour(ref dst, o, code, length);
++            return o + length;
++        }
++
++        [MethodImpl(MethodImplOptions.AggressiveInlining)]
++        private static void WriteColour(ref byte dst, nint o, uint code, int length)
++        {
++            if (length == 1) Unsafe.Add(ref dst, o) = (byte)code;
++            else if (length == 2) Unsafe.WriteUnaligned(ref Unsafe.Add(ref dst, o), (ushort)code);
++            else Unsafe.WriteUnaligned(ref Unsafe.Add(ref dst, o), code);
++        }
++
++        [MethodImpl(MethodImplOptions.AggressiveInlining)]
++        private static int ColourCode(uint px, uint b, out uint code)
+         {
+             uint dr = (uint)(sbyte)(byte)(px - b) + 2;
+             uint dg = (uint)(sbyte)(byte)((px >> 8) - (b >> 8)) + 2;
+             uint db = (uint)(sbyte)(byte)((px >> 16) - (b >> 16)) + 2;
+             if ((dr | dg | db) < 4)
+             {
+-                Unsafe.Add(ref dst, o) = (byte)(0x40 | dr << 4 | dg << 2 | db);
+-                return o + 1;
++                code = 0x40 | dr << 4 | dg << 2 | db;
++                return 1;
+             }
+             uint lg = dg + 30, lr = dr - dg + 8, lb = db - dg + 8;
+             if ((lg < 64) & ((lr | lb) < 16))
+             {
+-                Unsafe.WriteUnaligned(ref Unsafe.Add(ref dst, o), (ushort)(0x80 | lg | (lr << 4 | lb) << 8));
+-                return o + 2;
++                code = 0x80 | lg | (lr << 4 | lb) << 8;
++                return 2;
+             }
+             uint g7 = dg + 62;
+             uint r6 = (uint)(sbyte)(byte)(dr - dg) + 32, b6 = (uint)(sbyte)(byte)(db - dg) + 32;
+             if ((g7 < 128) & ((r6 | b6) < 64))
+             {
+                 uint v = g7 << 12 | r6 << 6 | b6;
+-                Unsafe.WriteUnaligned(ref Unsafe.Add(ref dst, o), (0xC0 + (v >> 16)) | (v >> 8 & 0xFF) << 8 | (v & 0xFF) << 16);
+-                return o + 3;
++                code = (0xC0 + (v >> 16)) | (v >> 8 & 0xFF) << 8 | (v & 0xFF) << 16;
++                return 3;
+             }
+-            Unsafe.WriteUnaligned(ref Unsafe.Add(ref dst, o), 0xFEu | (px & 0x00FFFFFFu) << 8);
+-            return o + 4;
++            code = 0xFEu | (px & 0x00FFFFFFu) << 8;
++            return 4;
+         }
+
+         private static int ColourCost(uint px, uint b)

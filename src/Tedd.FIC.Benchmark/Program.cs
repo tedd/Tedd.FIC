@@ -16,7 +16,7 @@ if (args.Length > 0 && args[0] == "--corpus")
 
 const int width = 512, height = 512;
 int iterations = args.Length > 0 ? int.Parse(args[0]) : 7;
-Console.WriteLine($"Runtime: {Environment.Version}; OS: {RuntimeInformation.OSDescription}; CPU: {Environment.ProcessorCount} logical processors; {iterations} timed repetitions; {width}x{height} RGBA");
+Console.WriteLine($"Runtime: {Environment.Version}; OS: {RuntimeInformation.OSDescription}; CPU: {Environment.ProcessorCount} logical processors; 100 warmups and {iterations} timed repetitions per operation; {width}x{height} RGBA");
 Console.WriteLine("Image,Codec,Bytes,EncodeMs,DecodeMs");
 
 foreach (string pattern in new[] { "gradient", "graphics", "noise" })
@@ -45,7 +45,7 @@ foreach (string pattern in new[] { "gradient", "graphics", "noise" })
 
 double Median(Action action)
 {
-    action();
+    for (int i = 0; i < 100; i++) action();
     double[] measurements = new double[iterations];
     for (int i = 0; i < iterations; i++)
     {

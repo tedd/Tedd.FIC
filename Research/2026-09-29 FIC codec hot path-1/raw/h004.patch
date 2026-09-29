@@ -1,0 +1,13 @@
+diff --git a/src/Tedd.FIC/Ficq/R0.cs b/src/Tedd.FIC/Ficq/R0.cs
+index 11f21f2..d5bbbff 100644
+--- a/src/Tedd.FIC/Ficq/R0.cs
++++ b/src/Tedd.FIC/Ficq/R0.cs
+@@ -276,7 +276,7 @@ internal sealed unsafe class R0Encoder
+     [ThreadStatic] private static R0Encoder? _local;
+     public static R0Encoder Local => _local ??= new R0Encoder();
+
+-    public bool Masks = true;
++    public bool Masks = false;
+
+     /// <summary>Gets a safe output capacity for one R0 strip.</summary>
+     public static long MaxPayload(int w, int rows, int P) => 3 + 15 + (long)w * rows * P * (25 + 8 + 8 + 1) / 8 + (long)rows * P + 64;

@@ -1,0 +1,41 @@
+Top 40 Functions (Inclusive)                                                  Inclusive           Exclusive
+1.  (Non-Activities)                                                          100%                0%
+2.  Threads                                                                   100%                0%
+3.  Thread.StartCallback(class System.Threading.Thread*)                      61.75%              0%
+4.  WaitHandle.WaitForMultipleObjectsIgnoringSyncContext(int*,int32,bool,i    45.57%              45.57%
+5.  WaitHandle.WaitOneNoCheck(int32,bool,class System.Object,value class W    45.57%              0%
+6.  Environment.CallEntryPoint(int,class System.String[]*,int32*,bool,clas    38.19%              0.01%
+7.  Probe!Program.<Main>$(class System.String[])                              38.18%              0.01%
+8.  Probe!Corpus.Run(class System.String[])                                   38.17%              0.04%
+9.  TimerQueue.TimerThread()                                                  37.89%              0%
+10. Fic.Encode(value class System.ReadOnlySpan`1<unsigned int8>,int32,int3    33.06%              0%
+11. EncScratch.ForStrips(int32,int32,class System.Action`2<int32,class Ted    32.43%              4.7%
+12. CompactEncoder.EncodeParts(value class System.ReadOnlySpan`1<unsigned     32.43%              0%
+13. CompactEncoder+<>c__DisplayClass7_0.<EncodeParts>b__1(int32,class Tedd    27.06%              0%
+14. CompactEncoder.StripBest(unsigned int8*,int32,int32,int32,int32,class     25.92%              0.67%
+15. R0Encoder.Encode(unsigned int8*,int32,int32,int32,int32,unsigned int8*    22.02%              0%
+16. R0Encoder.EncodeCore(unsigned int8*,int32,int32,int32,int32,unsigned i    21.98%              6.46%
+17. PortableThreadPool+WorkerThread.WorkerThreadStart()                       15.94%              0%
+18. LowLevelLifoSemaphore.WaitAsWaiter(int32)                                 15.83%              0%
+19. LowLevelLifoSemaphore.Block(int32)                                        15.83%              0%
+20. LowLevelThreadBlocker.TimedWait(int32)                                    15.83%              15.83%
+21. Fic.EncodeContainer(value class System.ReadOnlySpan`1<unsigned int8>,i    8.15%               0%
+22. CompactEncoder.Encode(value class System.ReadOnlySpan`1<unsigned int8>    8.12%               0%
+23. PortableThreadPool+GateThread.GateThreadStart()                           7.92%               0%
+24. R0Encoder.Emit(unsigned int8*,unsigned int8*,int32,value class Bits&,b    6.64%               6.64%
+25. Image.Load(class System.String)                                           4.35%               0%
+26. Rgba32].<Load>b__0(class System.IO.Stream)                                4.29%               0%
+27. ImageDecoder.Decode(class SixLabors.ImageSharp.Formats.DecoderOptions,    4.29%               0%
+28. ImageDecoder.WithSeekableStream(class SixLabors.ImageSharp.Formats.Dec    4.29%               0%
+29. ImageDecoder.<WithSeekableStream>g__PerformActionAndResetPosition|11_0    4.29%               0%
+30. Rgba32].<Decode>b__0(class System.IO.Stream)                              4.29%               0%
+31. __Canon].Decode(class SixLabors.ImageSharp.Formats.DecoderOptions,clas    4.29%               0%
+32. JpegDecoder.Decode(class SixLabors.ImageSharp.Formats.Jpeg.JpegDecoder    4.29%               0.06%
+33. Image.Load(class SixLabors.ImageSharp.Formats.DecoderOptions,class Sys    4.29%               0%
+34. Image.WithSeekableStream(class SixLabors.ImageSharp.Formats.DecoderOpt    4.29%               0%
+35. Image.Decode(class SixLabors.ImageSharp.Formats.DecoderOptions,class S    4.29%               0%
+36. Image.Load(class SixLabors.ImageSharp.Formats.DecoderOptions,class Sys    4.29%               0%
+37. ImageDecoderCore.Decode(class SixLabors.ImageSharp.Configuration,class    4.22%               0%
+38. JpegDecoderCore.ParseStream(class SixLabors.ImageSharp.IO.BufferedRead    4.22%               0%
+39. HuffmanScanDecoder.ParseEntropyCodedData(int32)                           4.22%               0%
+40. JpegDecoderCore.Decode(class SixLabors.ImageSharp.IO.BufferedReadStrea    4.22%               0%

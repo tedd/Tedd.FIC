@@ -1,0 +1,11 @@
+
+Provider Name                           Keywords            Level               Enabled By
+Microsoft-DotNETCore-SampleProfiler     0x0000000000000000  Informational(4)    --providers
+
+Launching: dotnet "D:\SourceCode\Tedd.FIC\Research\2026-09-29 FIC codec hot path-1\Probe\bin\Release\net11.0\Probe.dll" profile-noise
+Process        : C:\Program Files\dotnet\dotnet.exe
+Output File    : D:\SourceCode\Tedd.FIC\Research\2026-09-29 FIC codec hot path-1\profiling\noise.nettrace
+
+
+Trace completed.
+Process exited with code '0'.

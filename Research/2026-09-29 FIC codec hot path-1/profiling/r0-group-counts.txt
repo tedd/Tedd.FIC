@@ -1,0 +1,3 @@
+image=0; size=2272x1704; DebugGroups=1181099; DebugZero=15407; DebugQuotientZero=43833; DebugHigh=11383
+image=1; size=4032x3024; DebugGroups=1845615; DebugZero=3616; DebugQuotientZero=34552; DebugHigh=943
+image=2; size=3024x4032; DebugGroups=2017171; DebugZero=714; DebugQuotientZero=29625; DebugHigh=6723

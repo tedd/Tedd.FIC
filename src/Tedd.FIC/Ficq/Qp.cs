@@ -793,7 +793,10 @@ internal static class QpCodec
                     uint b = TB.Med ? Unsafe.Add(ref P, k) : prev;
                     if (((px ^ b) >> 24) == 0)
                     {
-                        if (ColourCost(px, b) > 2)
+                        // H-002: use the emitted code length for the L2 decision instead of recomputing color deltas.
+                        // The validated MaxEncodedSize buffer permits up to four speculative bytes; only o bytes are published.
+                        nint next = Colour(ref dst, o, px, b);
+                        if (next - o > 2)
                         {
                             int sl = L2Slot(px);
                             ref uint l2 = ref Unsafe.Add(ref L2, sl);
@@ -803,9 +806,9 @@ internal static class QpCodec
                                 Unsafe.Add(ref dst, o + 1) = (byte)sl;
                                 o += 2;
                             }
-                            else { o = Colour(ref dst, o, px, b); l2 = px; }
+                            else { o = next; l2 = px; }
                         }
-                        else o = Colour(ref dst, o, px, b);
+                        else o = next;
                     }
                     else
                     {

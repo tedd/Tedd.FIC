@@ -1,0 +1,41 @@
+Top 40 Functions (Exclusive)                                                  Inclusive           Exclusive
+1.  WaitHandle.WaitForMultipleObjectsIgnoringSyncContext(int*,int32,bool,i    45.57%              45.57%
+2.  LowLevelThreadBlocker.TimedWait(int32)                                    15.83%              15.83%
+3.  R0Encoder.Emit(unsigned int8*,unsigned int8*,int32,value class Bits&,b    6.64%               6.64%
+4.  R0Encoder.EncodeCore(unsigned int8*,int32,int32,int32,int32,unsigned i    21.98%              6.46%
+5.  EncScratch.ForStrips(int32,int32,class System.Action`2<int32,class Ted    32.43%              4.7%
+6.  R0.ZRows8(int32,unsigned int32*,unsigned int32*,unsigned int8*,unsigne    3.78%               3.78%
+7.  R0Encoder.Planes4(unsigned int8*,unsigned int32*,int32,unsigned int32,    2.35%               2.35%
+8.  LiteralStrip.LowerBoundsAvx2(unsigned int8*,int64,int32,int64,int64*)     2.17%               2.17%
+9.  R0.KRow(int32,unsigned int16*,unsigned int8*,int32)                       1.65%               1.65%
+10. HuffmanScanDecoder.ParseBaselineDataInterleaved()                         4.09%               1.31%
+11. Crc32C.Compute(value class System.ReadOnlySpan`1<unsigned int8>)          1.15%               1.15%
+12. SpanHelpers.MemmoveNative(unsigned int8&,unsigned int8&,unsigned int)     1.1%                1.1%
+13. R0.Act(unsigned int8*,unsigned int8*,unsigned int16*,int32)               0.97%               0.97%
+14. SpanHelpers.ZeroMemoryNative(unsigned int8&,unsigned int)                 0.88%               0.88%
+15. CompactEncoder.StripBest(unsigned int8*,int32,int32,int32,int32,class     25.92%              0.67%
+16. CompactEncoder+<>c__DisplayClass7_0.<EncodeParts>b__0(int32,class Tedd    0.63%               0.63%
+17. Block8x8F.NormalizeAndRound(value class System.Numerics.Vector`1<float    0.46%               0.46%
+18. CompactEncoder.ProbePx(unsigned int8*,int32,int32,int32,bool)             0.4%                0.4%
+19. Thread.StartCore()                                                        0.34%               0.34%
+20. Int32].PickPivotAndPartition(value class System.Span`1<!0>,class Syste    0.34%               0.34%
+21. SpanHelpers.Memmove(unsigned int8&,unsigned int8&,unsigned int)           0.26%               0.26%
+22. il!Interop+Ucrtbase.free(void*)                                           0.25%               0.25%
+23. Rgba32].ConvertStride(int32)                                              1.97%               0.13%
+24. Block8x8F.NormalizeColorsAndRoundInPlaceVector8(float32)                  0.59%               0.13%
+25. Block8x8F.TransposeInplace()                                              0.13%               0.13%
+26. Block8x8F.CopyArbitraryScale(float32&,unsigned int32,unsigned int32,un    0.13%               0.13%
+27. JpegColorConverterBase+YCbCrAvx.ConvertToRgbInplace(required_modifier     0.13%               0.13%
+28. Block8x8F.CopyTo2x2Scale(float32&,int32)                                  0.13%               0.13%
+29. Path.JoinInternal(value class System.ReadOnlySpan`1<wchar>,value class    0.13%               0.13%
+30. Path.GetExtension(value class System.ReadOnlySpan`1<wchar>)               0.11%               0.11%
+31. .ctor(class System.Buffers.IMemoryOwner`1<!0>[],int32,int64,bool)         0.07%               0.07%
+32. __Canon].FindNextEntry()                                                  0.07%               0.07%
+33. GC.<AllocateUninitializedArray>g__AllocateNewArrayWorker|77_0(int32,bo    0.07%               0.07%
+34. il!Interop+Kernel32.GetSystemTimes(int64&,int64&,int64&)                  0.07%               0.07%
+35. JpegDecoder.Decode(class SixLabors.ImageSharp.Formats.Jpeg.JpegDecoder    4.29%               0.06%
+36. Probe!Corpus.Run(class System.String[])                                   38.17%              0.04%
+37. EncScratch.Free()                                                         0.04%               0.04%
+38. NativeMemory.AlignedAlloc(unsigned int,unsigned int)                      0.03%               0.03%
+39. Probe!Program.<Main>$(class System.String[])                              38.18%              0.01%
+40. Environment.CallEntryPoint(int,class System.String[]*,int32*,bool,clas    38.19%              0.01%

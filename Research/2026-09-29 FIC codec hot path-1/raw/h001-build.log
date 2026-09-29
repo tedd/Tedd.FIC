@@ -1,0 +1,24 @@
+C:\Program Files\dotnet\sdk\11.0.100-rc.1.26425.128\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.RuntimeIdentifierInference.targets(385,5): message NETSDK1057: You are using a preview version of .NET. See: https://aka.ms/dotnet-support-policy [D:\SourceCode\Tedd.FIC\Research\2026-09-29 FIC codec hot path-1\Probe\Probe.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(358,47): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(387,39): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(791,49): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(795,40): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\FastEncoder.cs(41,29): warning CS0649: Field 'FastEncoder.Counts' is never assigned to, and will always have its default value null [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(47,42): warning CS0649: Field 'BlkCodec.MarkBits' is never assigned to, and will always have its default value [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\EncScratch.cs(45,26): warning CS0649: Field 'EncScratch.Poison' is never assigned to, and will always have its default value false [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+  Tedd.FIC -> D:\SourceCode\Tedd.FIC\src\Tedd.FIC\bin\Release\net11.0\Tedd.FIC.dll
+  Probe -> D:\SourceCode\Tedd.FIC\Research\2026-09-29 FIC codec hot path-1\Probe\bin\Release\net11.0\Probe.dll
+
+Build succeeded.
+
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(358,47): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(387,39): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(791,49): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(795,40): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\FastEncoder.cs(41,29): warning CS0649: Field 'FastEncoder.Counts' is never assigned to, and will always have its default value null [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\BlkCodec.cs(47,42): warning CS0649: Field 'BlkCodec.MarkBits' is never assigned to, and will always have its default value [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Ficq\EncScratch.cs(45,26): warning CS0649: Field 'EncScratch.Poison' is never assigned to, and will always have its default value false [D:\SourceCode\Tedd.FIC\src\Tedd.FIC\Tedd.FIC.csproj]
+    7 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.61

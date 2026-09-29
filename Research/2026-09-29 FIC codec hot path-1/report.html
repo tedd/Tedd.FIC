@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Scientific performance report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f6f8;
+      --surface: #fcfcfd;
+      --ink: #0f1217;
+      --ink-2: #4a5160;
+      --muted: #767d8b;
+      --grid: #e3e6eb;
+      --axis: #c3c8d1;
+      --hairline: rgba(15, 18, 23, .10);
+      --before: #a9cbf3;
+      --mid: #5f97dc;
+      --after: #1d5aa6;
+      --good: #006300;
+      --slower: #d9822b;
+      --noeffect: #b9c0cb;
+      --adopted-bg: #e4f2e4;
+      --adopted-ink: #0b4f0b;
+      --decision-bg: #fbf0da;
+      --decision-ink: #6b4a00;
+      --info-bg: #e3edfb;
+      --info-ink: #184f95;
+      --neutral-bg: #eceef1;
+      --neutral-ink: #4a5160;
+      --sans: "IBM Plex Sans", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 40px 16px 64px;
+      background: var(--page);
+      color: var(--ink);
+      font: 15px/1.55 var(--sans);
+    }
+    a { color: var(--after); overflow-wrap: anywhere; }
+    code, .mono { font-family: var(--mono); font-size: .86em; }
+    h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+    h1 { font-size: clamp(1.9rem, 1.25rem + 2vw, 2.65rem); line-height: 1.15; letter-spacing: -.012em; }
+    h2 { font-size: 1.25rem; line-height: 1.3; }
+    h3 { font-size: 1rem; line-height: 1.35; }
+    p { margin: 0; }
+    ul, ol { margin: 0; padding-left: 1.25em; display: grid; gap: 6px; }
+
+    .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 40px; }
+    .report-head { display: grid; gap: 12px; }
+    .eyebrow { font: .78rem/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .lede { color: var(--ink-2); max-width: 78ch; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--muted); font: .74rem/1.4 var(--mono); }
+    .report-status { display: inline-flex; padding: 2px 9px; border-radius: 999px; background: var(--info-bg); color: var(--info-ink); font: 500 .72rem/1.5 var(--sans); text-transform: capitalize; }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 8px; }
+    .kpi, .card, .chart, .table-wrap, .panel {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+    }
+    .kpi { padding: 16px 18px; display: grid; gap: 6px; }
+    .kpi-label { color: var(--ink-2); font-size: .86rem; }
+    .kpi-value { font-size: 2rem; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .kpi-value small { margin-left: 3px; color: var(--ink-2); font-size: 1rem; font-weight: 500; }
+    .kpi-delta { color: var(--ink-2); font-size: .86rem; }
+    .kpi-delta strong { font-weight: 600; }
+    .kpi-delta .good { color: var(--good); }
+    .kpi-delta .bad { color: var(--slower); }
+    .kpi-steps { color: var(--muted); font: .72rem/1.4 var(--mono); }
+
+    section { display: grid; gap: 14px; }
+    section > p { color: var(--ink-2); max-width: 82ch; }
+    .panel { padding: 18px 20px; }
+    .scope-grid, .evidence-grid, .outcome-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card { padding: 16px 18px; display: grid; gap: 6px; min-width: 0; }
+    .card p { color: var(--ink-2); }
+    .card .small, .small { color: var(--muted); font-size: .8rem; }
+    .card .metric { font: 500 .78rem/1.4 var(--mono); color: var(--muted); }
+
+    .charts { display: grid; gap: 20px; }
+    .chart { margin: 0; padding: 20px 20px 16px; display: grid; gap: 16px; overflow-x: auto; overflow-y: hidden; }
+    .chart-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+    .chart-head p { color: var(--ink-2); font-size: .9rem; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; color: var(--ink-2); font-size: .86rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 14px; height: 10px; border-radius: 0 3px 3px 0; display: inline-block; background: var(--swatch); }
+
+    .plot { display: grid; gap: 14px; }
+    .chart-row { display: grid; grid-template-columns: minmax(160px, 250px) 1fr; gap: 16px; align-items: center; }
+    .row-label { display: grid; gap: 2px; }
+    .row-label b { font-weight: 500; font-size: .95rem; }
+    .row-label small { color: var(--muted); font: .74rem/1.35 var(--mono); }
+    .track { position: relative; min-width: 0; }
+    .bar-plot-area { position: relative; display: grid; gap: 2px; margin-right: var(--bar-label-gutter, 0px); padding-block: 2px; }
+    .gridline { position: absolute; z-index: 0; top: -6px; bottom: -6px; width: 1px; background: var(--grid); }
+    .gridline.zero { background: var(--axis); }
+    .bar-line { position: relative; height: 16px; }
+    .bar { position: absolute; z-index: 1; left: 0; top: 1px; height: 14px; border-radius: 0 4px 4px 0; background: var(--bar-color); }
+    .whisker { position: absolute; z-index: 2; top: 7px; height: 1px; background: var(--ink); opacity: .65; pointer-events: none; }
+    .whisker::before, .whisker::after { content: ""; position: absolute; top: -3px; width: 1px; height: 7px; background: var(--ink); }
+    .whisker::before { left: 0; }
+    .whisker::after { right: 0; }
+    .bar-value { position: absolute; z-index: 3; top: -1px; color: var(--ink-2); font: .78rem/1.4 var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .bar-value strong { color: var(--ink); font-weight: 500; }
+    .bar-value .improve { color: var(--good); margin-left: 6px; }
+    .bar-value .regress { color: var(--slower); margin-left: 6px; }
+    .axis { display: grid; grid-template-columns: minmax(160px, 250px) 1fr; gap: 16px; }
+    .axis-ticks { position: relative; height: 18px; color: var(--muted); font: .72rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+    .axis-ticks span { position: absolute; transform: translateX(-50%); }
+    .axis-ticks span:first-child { transform: none; }
+    .axis-ticks span:last-child { transform: translateX(-100%); }
+    .axis .axis-ticks { margin-right: var(--bar-label-gutter, 0px); }
+
+    .effects { display: grid; gap: 20px; }
+    .effect-group { display: grid; gap: 8px; }
+    .effect-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+    .effect-head b { font-weight: 600; font-size: .95rem; }
+    .effect-head small { color: var(--muted); font: .74rem/1.4 var(--mono); }
+    .effect-row { display: grid; grid-template-columns: minmax(170px, 290px) 1fr; gap: 16px; align-items: center; }
+    .effect-label { font-size: .86rem; line-height: 1.3; }
+    .effect-label .id { margin-right: 6px; color: var(--muted); font: .74rem/1.3 var(--mono); }
+    .effect-track { position: relative; height: 18px; }
+    .effect-plot-area { position: absolute; inset: 0 var(--effect-right-gutter, 0px) 0 var(--effect-left-gutter, 0px); }
+    .effect-bar { position: absolute; z-index: 1; top: 3px; height: 12px; }
+    .effect-bar.faster { background: var(--after); border-radius: 3px 0 0 3px; }
+    .effect-bar.slower { background: var(--slower); border-radius: 0 3px 3px 0; }
+    .effect-bar.mixed { background: var(--noeffect); }
+    .effect-grid, .effect-zero { position: absolute; z-index: 0; top: -4px; bottom: -4px; width: 1px; background: var(--grid); }
+    .effect-zero { background: var(--axis); }
+    .effect-whisker { position: absolute; z-index: 2; top: 9px; height: 1px; background: var(--ink); opacity: .65; }
+    .effect-whisker::before, .effect-whisker::after { content: ""; position: absolute; top: -3px; width: 1px; height: 7px; background: var(--ink); }
+    .effect-whisker::before { left: 0; }
+    .effect-whisker::after { right: 0; }
+    .effect-value { position: absolute; z-index: 3; top: 0; color: var(--ink-2); font: .76rem/1.4 var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .effect-value strong { color: var(--ink); font-weight: 500; }
+    .effect-axis { display: grid; grid-template-columns: minmax(170px, 290px) 1fr; gap: 16px; }
+    .effect-axis .axis-ticks { margin-left: var(--effect-left-gutter, 0px); margin-right: var(--effect-right-gutter, 0px); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--grid); text-align: left; vertical-align: top; }
+    thead th { color: var(--ink-2); font-size: .8rem; font-weight: 500; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td.id { color: var(--muted); font: .8rem/1.5 var(--mono); white-space: nowrap; }
+    td.num { text-align: right; font: .8rem/1.5 var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .hypothesis-table { min-width: 820px; }
+    .hypothesis-table th:nth-child(1) { width: 68px; }
+    .hypothesis-table th:nth-child(2) { width: 37%; }
+    .hypothesis-table th:nth-child(4) { width: 160px; }
+    .cell-note { margin-top: 3px; color: var(--muted); font-size: .78rem; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: .76rem; font-weight: 500; white-space: nowrap; }
+    .chip.retained { background: var(--adopted-bg); color: var(--adopted-ink); }
+    .chip.decision-required, .chip.inconclusive { background: var(--decision-bg); color: var(--decision-ink); }
+    .chip.pending { background: var(--info-bg); color: var(--info-ink); }
+    .chip.rejected, .chip.blocked, .chip.not-applicable { background: var(--neutral-bg); color: var(--neutral-ink); }
+
+    dl { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; margin: 0; }
+    dt, dd { margin: 0; padding: 8px 0; border-bottom: 1px solid var(--grid); }
+    dt { padding-right: 18px; color: var(--muted); font-weight: 500; }
+    .code-note { padding-left: 13px; border-left: 3px solid var(--mid); }
+    .code-note + .code-note { margin-top: 14px; }
+    .empty { color: var(--muted); font-style: italic; }
+    footer { color: var(--muted); text-align: center; font: .72rem/1.4 var(--mono); }
+
+    @media (max-width: 700px) {
+      body { padding: 24px 10px 48px; }
+      .wrap { gap: 30px; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .kpi { padding: 12px; }
+      .kpi-value { font-size: 1.6rem; }
+      .kpi-steps { display: none; }
+      .scope-grid, .evidence-grid, .outcome-grid { grid-template-columns: 1fr; }
+      .chart { padding: 16px 12px 14px; }
+      .chart-row, .axis, .effect-row, .effect-axis { grid-template-columns: 1fr; gap: 5px; }
+      .axis > div:first-child, .effect-axis > div:first-child { display: none; }
+      .effect-value .secondary { display: none; }
+      dl { grid-template-columns: 1fr; }
+      dt { padding-bottom: 0; border-bottom: 0; }
+    }
+
+    @media print {
+      body { padding: 0; background: #fff; font-size: 11px; }
+      .wrap { max-width: none; gap: 18px; }
+      .chart, .table-wrap, .panel, .kpi, .card { break-inside: avoid; background: #fff; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="report-head">
+      <p class="eyebrow" id="eyebrow"></p>
+      <h1 id="title"></h1>
+      <p class="lede" id="headline"></p>
+      <div class="meta"><span class="report-status" id="status"></span><span id="generated"></span></div>
+      <div class="kpis" id="scorecards" aria-label="Performance outcomes"></div>
+    </header>
+
+    <section>
+      <h2>Scope and scientific question</h2>
+      <div class="scope-grid">
+        <article class="card"><h3>Scope</h3><p id="scope"></p></article>
+        <article class="card"><h3>Question</h3><p id="question"></p></article>
+      </div>
+    </section>
+
+    <div class="charts" id="charts"></div>
+
+    <section id="measurements-section">
+      <h2>Every measurement</h2>
+      <p>Recorded medians, observed ranges, and run counts for every comparison series.</p>
+      <div class="table-wrap"><table id="measurements-table"><thead><tr><th>Metric</th><th>Workload</th><th>Round</th><th class="num">Median</th><th class="num">Range</th><th class="num">Runs</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <figure class="chart" id="effects-chart">
+      <div class="chart-head">
+        <div><h2>Effect of each variant against the control</h2><p>Change against a control measured in the same period. Bars are medians; whiskers span the runs. Grey means the runs disagreed on direction.</p></div>
+        <div class="legend" aria-hidden="true"><span><i class="swatch" style="--swatch:var(--after)"></i>Faster</span><span><i class="swatch" style="--swatch:var(--slower)"></i>Slower</span><span><i class="swatch" style="--swatch:var(--noeffect)"></i>No consistent effect</span></div>
+      </div>
+      <div class="effects" id="effects"></div>
+    </figure>
+
+    <section>
+      <h2 id="hypothesis-title">Hypotheses</h2>
+      <p>Claims are recorded before measurement and tested against the declared baseline. Results smaller than environmental variation remain inconclusive.</p>
+      <div class="table-wrap"><table class="hypothesis-table"><thead><tr><th>#</th><th>Hypothesis</th><th>Measured</th><th>Verdict</th></tr></thead><tbody id="hypotheses"></tbody></table></div>
+    </section>
+
+    <section>
+      <h2>Outcomes</h2>
+      <div class="outcome-grid">
+        <article class="card"><h3>Retained changes</h3><div id="retainedChanges"></div></article>
+        <article class="card"><h3>Decisions required</h3><div id="decisions"></div></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Environment and baseline epoch</h2>
+      <div class="panel"><dl id="environment"></dl></div>
+    </section>
+
+    <section>
+      <h2>Hotspot evidence</h2>
+      <div class="evidence-grid" id="hotspots"></div>
+    </section>
+
+    <section>
+      <h2>Investigation-area coverage</h2>
+      <div class="evidence-grid" id="areas"></div>
+    </section>
+
+    <section>
+      <h2>Correctness evidence</h2>
+      <div class="panel" id="correctness"></div>
+    </section>
+
+    <section>
+      <h2>Generated-code observations</h2>
+      <div class="panel" id="generatedCode"></div>
+    </section>
+
+    <section>
+      <h2>Threats to validity</h2>
+      <div class="panel" id="validityThreats"></div>
+    </section>
+
+    <section>
+      <h2>Reproduction procedure</h2>
+      <div class="panel" id="reproduction"></div>
+    </section>
+
+    <section>
+      <h2>Artifacts</h2>
+      <div class="panel" id="artifacts"></div>
+    </section>
+
+    <footer>Generated from the Scientific Performance standard report template.</footer>
+  </main>
+
+  <script id="report-data" type="application/json">{"title":"FIC .NET encoder hot-path investigation","generatedAt":"2026-09-29T22:27:22+02:00","status":"complete","scope":"Local, byte-identical optimizations of single-threaded .NET FIC encoding on synthetic RGBA and a deterministic real-image sample. Broader SIMD rewrites and changed format/size policy are outside this investigation.","question":"Which measured local encoder cost can be removed while preserving encoded bytes and avoiding material representative-workload regressions?","primaryMetric":"milliseconds per encode","summary":{"baseline":7.9009,"final":4.7629,"unit":"ms/image","changePercent":-39.72,"headline":"Noisy Default encoding improved 39.7% with identical bytes; the 50-image aggregate changed -1.2% and is close to run variation."},"scorecards":[{"title":"Noisy 512×512 Default encode","value":4.7629,"unit":"ms/image","baseline":7.9009,"wallChangePercent":-39.72,"progression":"7.9009 → 4.7629 ms; 18 batched observations per variant in alternating order"},{"title":"50-image Default corpus","value":466.608,"unit":"summed ms","baseline":472.304,"wallChangePercent":-1.21,"progression":"Two baseline and two candidate launches, A-B-B-A; per-image medians summed"}],"environment":[{"label":"Baseline revision","value":"5993551c14fb976470e3b894dbe0494526fca6d0; untracked research rig only before codec edit"},{"label":"Runtime/SDK","value":".NET runtime 11.0.0; SDK 11.0.100-rc.1.26425.128; Release net11.0"},{"label":"JIT/GC","value":"TieredPGO enabled; workstation GC; concurrent GC disabled in Directory.Build.props"},{"label":"CPU/OS","value":"AMD Ryzen 9 5950X, 32 logical processors; Windows 10.0.26200; x64 AVX2/BMI2"},{"label":"Corpus control","value":"CPU 4 affinity, AboveNormal priority, 20 warmups per image, seven timed encodes; 10 images from each of five folders; seed 20260926"},{"label":"Synthetic control","value":"100 warmups per scenario; batches of 10 encodes; nine batches per process; two processes per variant in alternating order"},{"label":"Lock","value":"C:\\Users\\tedd\\.codex\\locks\\performance-measurement.lock; all builds, tests, traces and timings via run_with_performance_lock.py"},{"label":"Published table","value":"Independent current-code benchmark: three launches, each 100 warmups and seven timed repetitions per codec operation; not used to estimate H-002 effect"}],"hotspots":[{"name":"QpCodec.Enc\u003cBaseW\u003e.Parse2","location":"src/Tedd.FIC/Ficq/Qp.cs:759","inclusivePercent":37.79,"exclusivePercent":37.09,"evidence":"EventPipe sample-profile top-N on warmed 512×512 noise; percentages are of process samples, not encode CPU time","limit":"Repeated color-delta classification and code emission on literals"},{"name":"R0Encoder.Emit","location":"src/Tedd.FIC/Ficq/R0.cs:368","exclusivePercent":6.64,"evidence":"EventPipe sample-profile on a 12 MP corpus photo; process sample denominator includes idle runtime threads","limit":"Bitstream packing; no supported all-zero/escape shortcut at measured incidence"}],"areas":[{"name":"Qp literal classification","boundary":"Qp.Enc.Parse2 same-alpha branch","evidence":"37.09% exclusive process samples on noisy Default encoding","catalogue":"CPU C2; Storage S2; Runtime R2","hypothesisIds":["H-002","H-003"],"disposition":"H-002 retained; H-003 rejected on corpus and burden"},{"name":"R0 bitstream and masks","boundary":"R0Encoder.Emit and EncodeCore","evidence":"6.64% Emit samples on representative photo; group counts recorded","catalogue":"Memory M7; CPU C1/C3; Storage S1","hypothesisIds":["H-001","H-004","H-005","H-006","H-007"],"disposition":"Two rejected, three ruled out by measured incidence/headroom"},{"name":"Transfers and checksum","boundary":"NativePayload and Crc32C","evidence":"1.10% memmove and 1.15% CRC among corpus process samples","catalogue":"Memory M1/M7; CPU C4","hypothesisIds":["H-008","H-009","H-010"],"disposition":"No justified local byte-identical change"}],"series":[{"title":"Synthetic Default encode","description":"Batched per-image medians; whiskers span all 18 observations in each variant. Only the noisy result has nonoverlapping ranges.","unit":"ms/image","lowerIsBetter":true,"rounds":["Baseline","H-002"],"rows":[{"label":"Gradient","detail":"512×512 RGBA, Default effort, no outer compression","measurements":[{"median":1.1727,"min":1.0984,"max":1.271,"n":18},{"median":1.1311,"min":1.0964,"max":1.2307,"n":18,"changePercent":-3.55}]},{"label":"Graphics","detail":"512×512 RGBA, Default effort, no outer compression","measurements":[{"median":1.9932,"min":1.9119,"max":2.106,"n":18},{"median":1.9511,"min":1.86,"max":2.4328,"n":18,"changePercent":-2.11}]},{"label":"Noise","detail":"512×512 RGBA, Default effort, no outer compression","measurements":[{"median":7.9009,"min":7.5556,"max":8.764,"n":18},{"median":4.7629,"min":4.4415,"max":4.995,"n":18,"changePercent":-39.72}]}]},{"title":"50-image corpus","description":"Bars are sums of per-image medians, averaged over two A/B launches; whiskers span launch totals. This is not wall-clock duration.","unit":"summed ms","lowerIsBetter":true,"rounds":["Baseline","H-002"],"rows":[{"label":"Five folders × 10 images","detail":"Equal image count per folder; same manifest and 72,986,745 encoded bytes in every variant","measurements":[{"median":472.304,"min":466.466,"max":478.141,"n":2},{"median":466.608,"min":465.162,"max":468.054,"n":2,"changePercent":-1.21}]}]}],"effectGroups":[{"name":"Control-relative H-002 effects","control":"A-B-B-A from separate baseline and candidate binaries under one performance lock","items":[{"hypothesisId":"H-002","label":"Noisy Default encode","effect":-0.3972,"range":[-0.493,-0.339],"note":"Conservative cross-sample extreme range; 18 observations per variant"},{"hypothesisId":"H-002","label":"50-image corpus","effect":-0.0121,"range":[-0.0272,0.0035],"note":"Range of ordered launch contrasts; crosses zero"}]}],"hypotheses":[{"id":"H-001","claim":"Skip R0 bitstream stores while fewer than eight bits are complete.","mechanism":"fewer overlapping stores in R0Encoder.Put","prediction":"Lower Default and Fast encode latency without output changes.","falsification":"No repeatable application gain or a regression.","change":"Guarded the eight-byte store on a nonzero completed-byte count.","changeScope":"local","maintainability":"Added a branch to a very hot bitstream helper.","codeComments":"Reverted; no retained comment.","result":"The warmed Default scenarios were within noise; Fast and decode controls also drifted.","state":"rejected","decision":"Rejected","decisionRationale":"The extra branch did not produce a controlled caller benefit.","evidence":["raw/epoch-a-h001-1.csv","raw/h001-1.csv"],"risks":[]},{"id":"H-002","claim":"Reuse the already emitted color-code length for the L2 decision in Qp.Parse2.","mechanism":"remove duplicate color-delta classification on same-alpha literals","prediction":"Reduce noisy Default encode time while preserving encoded bytes and corpus latency.","falsification":"No repeatable gain, altered encoded bytes, or material corpus regression.","change":"Emit the color candidate once, use its length to decide whether a two-byte L2 code replaces it, and publish only the selected length.","changeScope":"local","maintainability":"A non-obvious speculative write requires an explicit buffer-capacity invariant.","codeComments":"Adjacent H-002 comment states the MaxEncodedSize and published-length invariant.","result":"Synthetic noisy Default encode median 7.9009 to 4.7629 ms (-39.7%); 50-image A-B-B-A sum 472.304 to 466.608 ms (-1.2%), near run variation. Six synthetic output hashes matched.","state":"retained","decision":"Adopted","decisionRationale":"The large nonoverlapping noisy-input benefit and byte identity justify the small local edit; the corpus shows no material regression in alternating runs.","evidence":["raw/abba-sa1.csv","raw/abba-sb1.csv","raw/abba-a1.csv","raw/abba-b1.csv","disassembly/h002-parse2.asm"],"risks":["Extra speculative writes can cost time where L2 hits are common; bounded by MaxEncodedSize."]},{"id":"H-003","claim":"Compute the color code before writing so L2 hits avoid speculative stores.","mechanism":"separate classification from emission","prediction":"Keep the noise gain and improve the real-image corpus over H-002.","falsification":"A representative corpus regression or excessive code burden.","change":"Added ColourCode and WriteColour helpers; deferred stores until after L2 selection.","changeScope":"moderate","maintainability":"Expanded and branched the hot helper across all color paths.","codeComments":"Reverted; no retained comment.","result":"Noisy Default improved against control, but fixed-core corpus sum regressed 6.1% and code became more complex.","state":"rejected","decision":"Rejected","decisionRationale":"The representative regression and larger maintenance surface outweighed a content-specific gain.","evidence":["raw/h003-corpus.csv","raw/h003.patch"],"risks":[],"parentId":"H-002"},{"id":"H-004","claim":"Skip R0 zero-group mask detection on photo-like strips.","mechanism":"remove a prepass over groups with few all-zero residuals","prediction":"Lower photographic encode time without material size loss.","falsification":"Slower corpus encoding or a size regression.","change":"Disabled R0Encoder.Masks as an upper-bound experiment.","changeScope":"local","maintainability":"Changes the encoded representation and may harm compression.","codeComments":"Reverted; no retained comment.","result":"The 50-image sample was 12.4% slower and 20.75% larger; gradient output also changed.","state":"rejected","decision":"Rejected","decisionRationale":"The compression and speed regressions violate the primary caller and byte-identity constraints.","evidence":["raw/h004-corpus.csv","raw/h004.patch"],"risks":[]},{"id":"H-005","claim":"Special-case all-zero eight-pixel groups in R0.Emit.","state":"not-applicable","decision":"Low incidence","mechanism":"bypass vector quotient packing and PEXT","result":"Only 714–15,407 of 1.18–2.02 million measured groups were all zero (0.04–1.30%). The extra common-path test lacks plausible net benefit.","evidence":["profiling/r0-group-counts.txt"]},{"id":"H-006","claim":"Specialize R0.Emit's large-quotient fallback.","state":"not-applicable","decision":"Rare path","mechanism":"reduce scalar escape handling","result":"High-quotient groups were 943–11,383 of 1.18–2.02 million (0.05–0.96%); no material caller headroom.","evidence":["profiling/r0-group-counts.txt"]},{"id":"H-007","claim":"Precompute vector Rice thresholds for R0.KRow.","state":"not-applicable","decision":"Insufficient headroom","mechanism":"replace five per-row broadcasts with cached vectors","result":"KRow was 1.65% of all corpus trace samples, including idle runtime threads. Cache loads and a new table would add complexity without evidence of a material application gain."},{"id":"H-008","claim":"Avoid the selected strip's NativePayload copy.","state":"not-applicable","decision":"Ownership cost","mechanism":"remove one intermediate buffer transfer","result":"Memmove was 1.10% of all corpus trace samples; direct ownership transfer would rework scratch reuse and exception cleanup for a low observed ceiling."},{"id":"H-009","claim":"Specialize CRC composition for fixed strip lengths.","state":"not-applicable","decision":"Insufficient headroom","mechanism":"avoid polynomial shift calculation","result":"Crc32C.Compute was 1.15% of corpus trace samples and ShiftFor already caches common lengths; no repeated polynomial setup was observed."},{"id":"H-010","claim":"Elide the literal lower-bound guarantee check.","state":"not-applicable","decision":"Violates size contract","mechanism":"remove LiteralStrip.LowerBoundsAvx2 work","result":"The check preserves the encoder's literal fallback and output-size guarantee. Its 2.17% sampled share does not justify changing the byte/size behavior in this investigation."}],"retainedChanges":["H-002 reuses Qp.Enc.Parse2's emitted color-code length on same-alpha literals; source comment documents the bounded speculative store.","The synthetic benchmark now warms each codec operation for 100 calls before timing; the site and README contain the current three-launch results."],"decisions":["H-003 was discarded despite a noisy-input gain because the controlled real-image sample regressed and the refactor expanded the hot path.","H-004 was discarded because disabling R0 masks increased corpus output size by 20.75% and encoding time by 12.4% in its screening epoch.","The search stopped at ten defensible local hypotheses: sampled incidence or ownership/format constraints ruled out six without adding unsupported variants. Broad SIMD fusion remains a separate investigation."],"correctness":["24 .NET codec tests passed for H-002.","Six synthetic fixtures (three patterns × Fast/Default) had identical SHA-256 encoded outputs between baseline and H-002.","Every timed corpus output decoded pixel-for-pixel; all 50 paired encoded lengths matched across A-B-B-A runs.","The speculative write is bounded by QpCodec.Encode's MaxEncodedSize destination validation; only the selected encoded length is copied into a container."],"generatedCode":[{"hypothesisId":"H-002","summary":"Optimized BaseW Parse2 shrank from 3,280 to 2,736 bytes, and one ColourCost call site disappeared.","before":"Two ColourCost call sites: same-alpha and alpha-different branches.","after":"One ColourCost call site remains in the alpha-different branch; same-alpha uses Colour's returned length.","artifact":"disassembly/h002-parse2.asm"}],"validityThreats":["The EventPipe top-N denominator includes runtime idle/finalizer threads; its percentages rank source locations but are not application CPU fractions or Amdahl ceilings.","The optimized disassembly used TieredCompilation=0 and ReadyToRun=0 for diagnosis; acceptance timings used deployment settings with TieredPGO enabled.","The 50-image corpus is a deterministic subset, not the site's historical 5,000-image sample. Its -1.2% result is within launch variability and is not a general throughput claim.","The synthetic ABBA runs were unpinned; unrelated Fast/decode movements show residual host noise. The noisy Default encode ranges did not overlap.","The first pilot used only eight warmups and showed tiering drift; those results were retained as epoch A but excluded from the final estimate.","Acceptance priorities and burden limits were formalized after the first pilot; this limits claims of pre-registered selection."],"reproduction":["From baseline revision 5993551, run the saved abba-h002.ps1 under the fixed shared performance lock to build both variants and reproduce the corpus comparison.","Run abba-synthetic.ps1 against those two saved binaries under the same lock for the synthetic comparison.","From the retained source, run site-benchmark.ps1 under the lock to regenerate current public benchmark values.","Run python analyze_abba.py, python analyze_synthetic_abba.py, and python analyze_site.py for tabular summaries."],"artifacts":[{"label":"Raw A-B-B-A corpus and synthetic tables","path":"raw/"},{"label":"CPU profiles and compact rankings","path":"profiling/"},{"label":"Baseline Parse2 disassembly","path":"disassembly/baseline-parse2.asm"},{"label":"H-002 Parse2 disassembly","path":"disassembly/h002-parse2.asm"},{"label":"Catalogue coverage ledger","path":"coverage.md"}]}</script>
+  <script>
+    (() => {
+      "use strict";
+      const data = JSON.parse(document.getElementById("report-data").textContent);
+      const $ = id => document.getElementById(id);
+      const text = (node, value) => { node.textContent = value ?? ""; return node; };
+      const el = (tag, className, value) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (value !== undefined) text(node, value);
+        return node;
+      };
+      const number = value => Number.isFinite(value) ? value.toLocaleString(undefined, { maximumFractionDigits: 3 }) : "—";
+      const signedPercent = value => Number.isFinite(value) ? `${value > 0 ? "+" : value < 0 ? "−" : ""}${number(Math.abs(value))}%` : "—";
+      const effectPercent = value => signedPercent(value * 100);
+      const roundColors = ["var(--before)", "var(--mid)", "var(--after)", "#123d72", "#739ecf"];
+
+      function niceMax(value) {
+        if (!Number.isFinite(value) || value <= 0) return 1;
+        const magnitude = 10 ** Math.floor(Math.log10(value));
+        for (const step of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) {
+          if (step * magnitude >= value) return step * magnitude;
+        }
+        return 10 * magnitude;
+      }
+
+      function safeHref(value) {
+        if (typeof value !== "string") return "#";
+        if (!/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
+        try {
+          const protocol = new URL(value).protocol;
+          return ["http:", "https:", "file:"].includes(protocol) ? value : "#";
+        } catch { return "#"; }
+      }
+
+      document.title = `${data.title} — Scientific performance report`;
+      text($("eyebrow"), `${data.primaryMetric} · performance investigation`);
+      text($("title"), data.title);
+      text($("headline"), data.summary.headline);
+      text($("status"), data.status.replaceAll("-", " "));
+      text($("generated"), `Generated ${data.generatedAt}`);
+      text($("scope"), data.scope);
+      text($("question"), data.question);
+
+      const scorecards = $("scorecards");
+      if (!data.scorecards.length) {
+        scorecards.append(el("p", "empty", "No headline measurements recorded."));
+      }
+      for (const item of data.scorecards) {
+        const card = el("article", "kpi");
+        card.append(el("div", "kpi-label", item.title));
+        const value = el("div", "kpi-value", number(item.value));
+        value.append(el("small", "", item.unit));
+        card.append(value);
+        const delta = el("div", "kpi-delta");
+        if (Number.isFinite(item.wallChangePercent)) {
+          const higherIsBetter = item.higherIsBetter === true;
+          const good = higherIsBetter ? item.wallChangePercent > 0 : item.wallChangePercent < 0;
+          const arrow = item.wallChangePercent > 0 ? "▲" : item.wallChangePercent < 0 ? "▼" : "◆";
+          const primary = el("strong", good ? "good" : item.wallChangePercent === 0 ? "" : "bad", `${arrow} ${signedPercent(item.wallChangePercent)} ${item.changeLabel || "wall"}`);
+          delta.append(primary);
+          if (Number.isFinite(item.baseline)) delta.append(document.createTextNode(` from ${number(item.baseline)} ${item.unit}`));
+        }
+        if (item.secondaryMetric && Number.isFinite(item.secondaryChangePercent)) {
+          delta.append(document.createTextNode(` · ${item.secondaryMetric} ${signedPercent(item.secondaryChangePercent)}`));
+        }
+        card.append(delta);
+        if (item.progression) card.append(el("div", "kpi-steps", item.progression));
+        scorecards.append(card);
+      }
+
+      function addGrid(track, maximum) {
+        const step = niceMax(maximum) / 4;
+        for (let value = 0; value <= maximum + step / 10; value += step) {
+          const line = el("i", `gridline${value === 0 ? " zero" : ""}`);
+          line.style.left = `${value / maximum * 100}%`;
+          track.append(line);
+        }
+      }
+
+      function renderSeries(series) {
+        const figure = el("figure", "chart");
+        const head = el("div", "chart-head");
+        const intro = el("div", "");
+        intro.append(el("h2", "", series.title), el("p", "", series.description || `Values in ${series.unit}.`));
+        const legend = el("div", "legend");
+        series.rounds.forEach((round, index) => {
+          const entry = el("span", "");
+          const swatch = el("i", "swatch"); swatch.style.setProperty("--swatch", roundColors[index % roundColors.length]);
+          entry.append(swatch, document.createTextNode(round)); legend.append(entry);
+        });
+        head.append(intro, legend); figure.append(head);
+
+        const plot = el("div", "plot");
+        const maximum = niceMax(Math.max(1, ...series.rows.flatMap(row => row.measurements.map(item => item.max ?? item.median))) * 1.18);
+        for (const row of series.rows) {
+          const rowNode = el("div", "chart-row");
+          const label = el("div", "row-label"); label.append(el("b", "", row.label));
+          if (row.detail) label.append(el("small", "", row.detail));
+          const track = el("div", "track");
+          const plotArea = el("div", "bar-plot-area"); addGrid(plotArea, maximum);
+          row.measurements.forEach((measurement, index) => {
+            const line = el("div", "bar-line");
+            const ratio = Math.max(0, measurement.median / maximum * 100);
+            const bar = el("i", "bar");
+            bar.style.width = `${ratio}%`; bar.style.setProperty("--bar-color", roundColors[index % roundColors.length]);
+            bar.title = `${row.label}, ${series.rounds[index]}: ${number(measurement.median)} ${series.unit}`;
+            line.append(bar);
+            if (Number.isFinite(measurement.min) && Number.isFinite(measurement.max)) {
+              const whisker = el("i", "whisker");
+              whisker.style.left = `${Math.max(0, measurement.min / maximum * 100)}%`;
+              whisker.style.width = `${Math.max(0, (measurement.max - measurement.min) / maximum * 100)}%`;
+              line.append(whisker);
+            }
+            const rangeEnd = Number.isFinite(measurement.max) ? Math.max(measurement.median, measurement.max) : measurement.median;
+            const labelAnchor = Math.max(0, rangeEnd / maximum * 100);
+            const value = el("span", "bar-value"); value.style.left = `calc(${labelAnchor}% + 8px)`;
+            value.append(el("strong", "", `${number(measurement.median)} ${series.unit}`));
+            if (Number.isFinite(measurement.changePercent)) {
+              const improved = series.lowerIsBetter === false ? measurement.changePercent > 0 : measurement.changePercent < 0;
+              value.append(el("span", improved ? "improve" : measurement.changePercent === 0 ? "" : "regress", signedPercent(measurement.changePercent)));
+            }
+            line.append(value); plotArea.append(line);
+          });
+          track.append(plotArea);
+          rowNode.append(label, track); plot.append(rowNode);
+        }
+        const axis = el("div", "axis"); axis.append(el("div", ""));
+        const ticks = el("div", "axis-ticks");
+        const step = maximum / 4;
+        for (let value = 0; value <= maximum + step / 10; value += step) {
+          const tick = el("span", "", number(value)); tick.style.left = `${value / maximum * 100}%`; ticks.append(tick);
+        }
+        axis.append(ticks); plot.append(axis); figure.append(plot);
+        return figure;
+      }
+
+      const charts = $("charts");
+      for (const series of data.series) charts.append(renderSeries(series));
+      if (!data.series.length) {
+        charts.hidden = true;
+        $("measurements-section").hidden = true;
+      }
+
+      const measurementBody = $("measurements-table").querySelector("tbody");
+      for (const series of data.series) {
+        for (const row of series.rows) {
+          row.measurements.forEach((measurement, index) => {
+            const tr = document.createElement("tr");
+            const range = Number.isFinite(measurement.min) && Number.isFinite(measurement.max)
+              ? `${number(measurement.min)}–${number(measurement.max)} ${series.unit}` : "—";
+            tr.append(
+              el("td", "", series.title), el("td", "", row.label), el("td", "", series.rounds[index]),
+              el("td", "num", `${number(measurement.median)} ${series.unit}`), el("td", "num", range),
+              el("td", "num", Number.isFinite(measurement.n) ? number(measurement.n) : "—")
+            );
+            measurementBody.append(tr);
+          });
+        }
+      }
+
+      function effectScale() {
+        const values = data.effectGroups.flatMap(group => group.items.flatMap(item => [item.effect, item.range[0], item.range[1]]));
+        const low = Math.min(-.05, ...values), high = Math.max(.05, ...values);
+        const pad = Math.max(.02, (high - low) * .08);
+        return { min: low - pad, max: high + pad };
+      }
+
+      if (!data.effectGroups.length) $("effects-chart").hidden = true;
+      else {
+        const scale = effectScale();
+        const x = value => (value - scale.min) / (scale.max - scale.min) * 100;
+        const effects = $("effects");
+        for (const group of data.effectGroups) {
+          const groupNode = el("div", "effect-group");
+          const head = el("div", "effect-head"); head.append(el("b", "", group.name));
+          if (group.control) head.append(el("small", "", group.control));
+          groupNode.append(head);
+          for (const item of group.items) {
+            const row = el("div", "effect-row");
+            const label = el("div", "effect-label");
+            if (item.hypothesisId) label.append(el("span", "id", item.hypothesisId));
+            label.append(document.createTextNode(item.label));
+            const track = el("div", "effect-track");
+            const plotArea = el("div", "effect-plot-area");
+            for (let i = 0; i <= 6; i++) {
+              const point = scale.min + (scale.max - scale.min) * i / 6;
+              const grid = el("i", Math.abs(point) < (scale.max - scale.min) / 100 ? "effect-zero" : "effect-grid");
+              grid.style.left = `${x(point)}%`; plotArea.append(grid);
+            }
+            const zero = el("i", "effect-zero"); zero.style.left = `${x(0)}%`; plotArea.append(zero);
+            const start = Math.min(0, item.effect), end = Math.max(0, item.effect);
+            const mixed = item.range[0] <= 0 && item.range[1] >= 0;
+            const direction = mixed ? "mixed" : item.effect < 0 ? "faster" : "slower";
+            const bar = el("i", `effect-bar ${direction}`); bar.style.left = `${x(start)}%`; bar.style.width = `${Math.abs(x(end) - x(start))}%`;
+            bar.title = `${item.label}: ${effectPercent(item.effect)}`; plotArea.append(bar);
+            const whisker = el("i", "effect-whisker"); whisker.style.left = `${x(item.range[0])}%`; whisker.style.width = `${Math.max(0, x(item.range[1]) - x(item.range[0]))}%`; plotArea.append(whisker);
+            const value = el("span", "effect-value");
+            if (item.effect < 0) {
+              const labelAnchor = Math.min(item.effect, item.range[0]);
+              value.dataset.side = "left";
+              value.style.left = `calc(${x(labelAnchor)}% - 8px)`;
+              value.style.transform = "translateX(-100%)";
+            } else {
+              const labelAnchor = Math.max(item.effect, item.range[1]);
+              value.dataset.side = "right";
+              value.style.left = `calc(${x(labelAnchor)}% + 8px)`;
+            }
+            value.append(el("strong", "", effectPercent(item.effect)));
+            if (item.secondaryMetric && Number.isFinite(item.secondaryEffect)) value.append(el("span", "secondary", ` · ${item.secondaryMetric} ${effectPercent(item.secondaryEffect)}`));
+            plotArea.append(value); track.append(plotArea); row.append(label, track); groupNode.append(row);
+          }
+          effects.append(groupNode);
+        }
+        const axis = el("div", "effect-axis"); axis.append(el("div", ""));
+        const ticks = el("div", "axis-ticks");
+        for (let i = 0; i <= 6; i++) {
+          const point = scale.min + (scale.max - scale.min) * i / 6;
+          const tick = el("span", "", effectPercent(point)); tick.style.left = `${x(point)}%`; ticks.append(tick);
+        }
+        axis.append(ticks); effects.append(axis);
+      }
+
+      function updateLabelGutters() {
+        for (const figure of charts.querySelectorAll(".chart")) {
+          let width = 0;
+          for (const label of figure.querySelectorAll(".bar-value")) width = Math.max(width, label.getBoundingClientRect().width);
+          const trackWidth = figure.querySelector(".track")?.getBoundingClientRect().width ?? 0;
+          const gutter = Math.min(Math.ceil(width) + 12, Math.max(0, trackWidth - 160));
+          figure.style.setProperty("--bar-label-gutter", `${gutter}px`);
+        }
+        const effects = $("effects");
+        let left = 0, right = 0;
+        for (const label of effects.querySelectorAll(".effect-value")) {
+          const width = label.getBoundingClientRect().width;
+          if (label.dataset.side === "left") left = Math.max(left, width);
+          else right = Math.max(right, width);
+        }
+        left = Math.ceil(left) + 12;
+        right = Math.ceil(right) + 12;
+        const trackWidth = effects.querySelector(".effect-track")?.getBoundingClientRect().width ?? 0;
+        const budget = Math.max(0, trackWidth - 180);
+        const total = left + right;
+        const factor = total > budget && total > 0 ? budget / total : 1;
+        effects.style.setProperty("--effect-left-gutter", `${Math.floor(left * factor)}px`);
+        effects.style.setProperty("--effect-right-gutter", `${Math.floor(right * factor)}px`);
+      }
+
+      updateLabelGutters();
+      document.fonts?.ready.then(updateLabelGutters);
+      window.addEventListener("resize", updateLabelGutters, { passive: true });
+
+      const hypothesisBody = $("hypotheses");
+      text($("hypothesis-title"), `${data.hypotheses.length} ${data.hypotheses.length === 1 ? "hypothesis" : "hypotheses"}`);
+      if (!data.hypotheses.length) {
+        const row = document.createElement("tr"); const cell = el("td", "empty", "None recorded."); cell.colSpan = 4; row.append(cell); hypothesisBody.append(row);
+      }
+      const icons = { retained: "✓", rejected: "×", inconclusive: "○", "decision-required": "○", pending: "…", blocked: "!", "not-applicable": "—" };
+      for (const item of data.hypotheses) {
+        const row = document.createElement("tr");
+        row.append(el("td", "id", item.id));
+        const claim = el("td", ""); claim.append(document.createTextNode(item.claim));
+        if (item.mechanism) claim.append(el("div", "cell-note", item.mechanism));
+        if (item.change) claim.append(el("div", "cell-note", `Change: ${item.change}`));
+        if (item.changeScope) claim.append(el("div", "cell-note", `Scope: ${item.changeScope}`));
+        if (item.maintainability) claim.append(el("div", "cell-note", `Maintainability: ${item.maintainability}`));
+        if (item.codeComments) claim.append(el("div", "cell-note", `Code comments: ${item.codeComments}`));
+        const measured = el("td", "", item.result || "Not yet measured.");
+        if (item.prediction && !item.result) measured.append(el("div", "cell-note", `Prediction: ${item.prediction}`));
+        if (item.decisionRationale) measured.append(el("div", "cell-note", `Decision: ${item.decisionRationale}`));
+        const verdict = el("td", ""); verdict.append(el("span", `chip ${item.state}`, `${icons[item.state]} ${item.decision}`));
+        row.append(claim, measured, verdict); hypothesisBody.append(row);
+      }
+
+      function renderList(id, items, ordered = false) {
+        const host = $(id);
+        if (!items.length) { host.append(el("p", "empty", "None recorded.")); return; }
+        const list = document.createElement(ordered ? "ol" : "ul");
+        items.forEach(item => list.append(el("li", "", item))); host.append(list);
+      }
+      renderList("retainedChanges", data.retainedChanges);
+      renderList("decisions", data.decisions);
+      renderList("correctness", data.correctness);
+      renderList("validityThreats", data.validityThreats);
+      renderList("reproduction", data.reproduction, true);
+
+      const environment = $("environment");
+      if (!data.environment.length) environment.replaceWith(el("p", "empty", "None recorded."));
+      else for (const item of data.environment) environment.append(el("dt", "", item.label), el("dd", "", item.value));
+
+      const hotspots = $("hotspots");
+      if (!data.hotspots.length) hotspots.append(el("p", "empty", "None recorded."));
+      for (const item of data.hotspots) {
+        const card = el("article", "card"); card.append(el("h3", "", item.name));
+        if (item.location) card.append(el("div", "small mono", item.location));
+        const shares = [];
+        if (Number.isFinite(item.inclusivePercent)) shares.push(`${number(item.inclusivePercent)}% inclusive`);
+        if (Number.isFinite(item.exclusivePercent)) shares.push(`${number(item.exclusivePercent)}% exclusive`);
+        if (shares.length) card.append(el("div", "metric", shares.join(" · ")));
+        if (item.evidence) card.append(el("p", "", item.evidence));
+        if (item.limit) card.append(el("p", "small", `Suspected limit: ${item.limit}`)); hotspots.append(card);
+      }
+
+      const areas = $("areas");
+      if (!data.areas.length) areas.append(el("p", "empty", "None recorded."));
+      for (const item of data.areas) {
+        const card = el("article", "card"); card.append(el("h3", "", item.name));
+        if (item.boundary) card.append(el("p", "", item.boundary));
+        if (item.evidence) card.append(el("p", "small", `Evidence: ${item.evidence}`));
+        if (item.catalogue) card.append(el("p", "small", `Catalogue: ${item.catalogue}`));
+        if (item.hypothesisIds?.length) card.append(el("div", "metric", item.hypothesisIds.join(" · ")));
+        if (item.disposition) card.append(el("p", "", item.disposition)); areas.append(card);
+      }
+
+      const generated = $("generatedCode");
+      if (!data.generatedCode.length) generated.append(el("p", "empty", "None recorded."));
+      for (const item of data.generatedCode) {
+        const note = el("article", "code-note"); note.append(el("h3", "", `${item.hypothesisId || "Unlinked"}: ${item.summary || "Observation"}`));
+        if (item.before) note.append(el("p", "", `Before: ${item.before}`));
+        if (item.after) note.append(el("p", "", `After: ${item.after}`));
+        if (item.artifact) { const link = el("a", "", item.artifact); link.href = safeHref(item.artifact); note.append(link); }
+        generated.append(note);
+      }
+
+      const artifacts = $("artifacts");
+      if (!data.artifacts.length) artifacts.append(el("p", "empty", "None recorded."));
+      else {
+        const list = document.createElement("ul");
+        for (const item of data.artifacts) {
+          const entry = document.createElement("li"); const link = el("a", "", item.label || item.path);
+          link.href = safeHref(item.path); entry.append(link); list.append(entry);
+        }
+        artifacts.append(list);
+      }
+    })();
+  </script>
+</body>
+</html>

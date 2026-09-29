@@ -1,0 +1,20 @@
+Runtime: 11.0.0; OS: Microsoft Windows 10.0.26200; CPU: 32 logical processors; 100 warmups and 7 timed repetitions per operation; 512x512 RGBA
+Image,Codec,Bytes,EncodeMs,DecodeMs
+gradient,FIC Fast,292045,1.920,0.680
+gradient,FIC Default,235802,1.873,1.050
+gradient,ImageSharp PNG,391293,112.357,5.762
+gradient,SkiaSharp PNG,353053,88.311,6.395
+gradient,ImageSharp JPEG q90,63462,2.973,2.151
+gradient,SkiaSharp JPEG q90,58310,6.780,5.156
+graphics,FIC Fast,1977,0.850,0.075
+graphics,FIC Default,1633,2.735,0.079
+graphics,ImageSharp PNG,2368,7.600,1.106
+graphics,SkiaSharp PNG,2426,15.820,2.609
+graphics,ImageSharp JPEG q90,7352,1.454,1.006
+graphics,SkiaSharp JPEG q90,3686,4.658,2.953
+noise,FIC Fast,835271,2.934,0.662
+noise,FIC Default,934915,7.544,2.300
+noise,ImageSharp PNG,900102,64.583,5.382
+noise,SkiaSharp PNG,918060,49.550,7.984
+noise,ImageSharp JPEG q90,235387,4.969,5.667
+noise,SkiaSharp JPEG q90,216215,10.824,6.344

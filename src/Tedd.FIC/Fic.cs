@@ -11,7 +11,7 @@ public enum FicEffort
     /// <summary>Balances compressed size and processing time.</summary>
     Default,
 
-    /// <summary>Tries additional strip modes to favor compressed size.</summary>
+    /// <summary>Tries additional strip modes and strip partitions to favor compressed size.</summary>
     Max,
 }
 
@@ -136,11 +136,28 @@ public static class Fic
         CheckImage(pixels, width, height, channels);
         FicContainer.CheckExif(exif);
         CheckCompression(compression);
-        byte[] payload = effort == FicEffort.Fast
-            ? FastEncoder.Encode(pixels, width, height, channels, FastSettings.Default, threads)
-            : CompactEncoder.Encode(pixels, width, height, channels, effort == FicEffort.Max ? CompactSettings.Max : CompactSettings.Default, threads);
         var selected = ResolveCompression(compression, effort);
         int quality = ResolveZstdLevel(selected, effort, zstdLevel);
+        var settings = effort == FicEffort.Max ? CompactSettings.Max : CompactSettings.Default;
+        byte[] best = EncodeContainer(pixels, width, height, channels, effort, threads, exif, settings, selected, quality);
+        if (effort != FicEffort.Max) return best;
+
+        // A second partition can improve both the strip coding and the outer stream.
+        // Compare complete containers because smaller FICQ need not compress better.
+        int trialRows = (int)Math.Min(512L, Math.Max(64L, 2_097_152L / width));
+        if (FastEncoder.StripRows(width, height, trialRows, settings.MinStripPixels) ==
+            FastEncoder.StripRows(width, height, settings.Rows, settings.MinStripPixels)) return best;
+        byte[] trial = EncodeContainer(pixels, width, height, channels, effort, threads, exif,
+            settings with { Rows = trialRows }, selected, quality);
+        return trial.Length < best.Length ? trial : best;
+    }
+
+    private static byte[] EncodeContainer(ReadOnlySpan<byte> pixels, int width, int height, int channels,
+        FicEffort effort, int threads, ReadOnlySpan<byte> exif, CompactSettings settings, FicCompression selected, int quality)
+    {
+        byte[] payload = effort == FicEffort.Fast
+            ? FastEncoder.Encode(pixels, width, height, channels, FastSettings.Default, threads)
+            : CompactEncoder.Encode(pixels, width, height, channels, settings, threads);
         if (selected == FicCompression.None)
         {
             byte[] legacy = GC.AllocateUninitializedArray<byte>(checked(FicContainer.LegacyHeaderSize + exif.Length + payload.Length));
@@ -164,7 +181,8 @@ public static class Fic
 
     /// <summary>Encodes a tightly packed RGB or RGBA image into a caller-provided buffer.</summary>
     /// <remarks><see cref="GetMaxEncodedLength"/> gives a sufficient destination length. A shorter buffer may also
-    /// succeed when the encoded stream fits. Compression writes into the destination; temporary FICQ storage is pooled.</remarks>
+    /// succeed when the encoded stream fits. Max effort compares two complete encodings before copying the winner;
+    /// other efforts write compression into the destination and pool temporary FICQ storage.</remarks>
     /// <param name="pixels">Exactly width × height × channels bytes, in row-major order.</param>
     /// <param name="width">Image width in pixels.</param>
     /// <param name="height">Image height in pixels.</param>
@@ -187,6 +205,14 @@ public static class Fic
         FicContainer.CheckExif(exif);
         CheckCompression(compression);
         bytesWritten = 0;
+        if (effort == FicEffort.Max)
+        {
+            byte[] encoded = Encode(pixels, width, height, channels, effort, threads, exif, compression, zstdLevel);
+            if (encoded.Length > destination.Length) return false;
+            encoded.CopyTo(destination);
+            bytesWritten = encoded.Length;
+            return true;
+        }
         var selected = ResolveCompression(compression, effort);
         int quality = ResolveZstdLevel(selected, effort, zstdLevel);
         if (selected != FicCompression.None)

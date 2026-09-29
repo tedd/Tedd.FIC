@@ -33,6 +33,8 @@ RGBA uses `channels: 4`. `FicEffort.Default` trades encoding time for size; `Fic
 
 The default `FicCompression.Auto` uses no outer compression for `FicEffort.Fast`, Zstandard quality 2 for `FicEffort.Default`, and Brotli quality 5 for `FicEffort.Max`. Explicit `FicCompression.Zstd` at Fast effort uses quality 1. Choose `None`, `Deflate`, `Gzip`, `Zstd`, or `Brotli` with the `compression` argument. The encoder stores the raw FICQ payload when compression would increase its size. Uncompressed output uses version `00`; compressed requests use version `02`.
 
+`FicEffort.Max` encodes with two strip partitions and retains the smaller complete file, including outer compression when requested. This adds encoding time and temporary memory but cannot increase output size relative to its original 64-row pass.
+
 Pass `zstdLevel: 3` with `compression: FicCompression.Zstd` to favor size over encoding speed. The default level is determined by effort; this override does not change the format byte.
 
 ```csharp

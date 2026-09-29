@@ -30,6 +30,39 @@ public class ContainerTests
     }
 
     [Fact]
+    public void MaxSelectsLongerStripPassWhenItProducesLessData()
+    {
+        const int width = 512, height = 512;
+        byte[] pixels = new byte[width * height * 4];
+        for (int i = 3; i < pixels.Length; i += 4) pixels[i] = 255;
+
+        byte[] encoded = Fic.Encode(pixels, width, height, 4, FicEffort.Max, compression: FicCompression.None);
+        int position = 9 + 6; // FIC version 00 header, then FICQ magic, version, and tier.
+        Assert.Equal(width, ReadVarint(encoded, ref position));
+        Assert.Equal(height, ReadVarint(encoded, ref position));
+        position++; // FICQ flags.
+        Assert.Equal(512, ReadVarint(encoded, ref position));
+        Assert.Equal(pixels, Fic.Decode(encoded, out _, out _, out _));
+
+        byte[] destination = new byte[encoded.Length];
+        Assert.True(Fic.TryEncode(pixels, width, height, 4, destination, out int written,
+            FicEffort.Max, compression: FicCompression.None));
+        Assert.Equal(encoded, destination[..written]);
+    }
+
+    private static int ReadVarint(byte[] data, ref int position)
+    {
+        int value = 0;
+        for (int shift = 0; shift <= 28; shift += 7)
+        {
+            int next = data[position++];
+            value |= (next & 127) << shift;
+            if (next < 128) return value;
+        }
+        throw new InvalidDataException("Invalid varint in test output.");
+    }
+
+    [Fact]
     public void RejectsInvalidContainerHeaders()
     {
         byte[] pixels = new byte[3 * 16 * 16];

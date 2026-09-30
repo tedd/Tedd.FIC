@@ -14,7 +14,7 @@ Across the 5,000-image corpus below, FIC Fast produced **24.6% fewer bytes** tha
 dotnet add package Tedd.FIC
 ```
 
-The current package targets .NET 11 RC1 or later.
+The package targets .NET 10 and .NET 11.
 
 ## Use
 

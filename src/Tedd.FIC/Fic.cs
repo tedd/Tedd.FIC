@@ -301,7 +301,7 @@ public static class Fic
         {
             if (version == 1)
             {
-                if (!System.IO.Compression.ZstandardDecoder.TryGetMaxDecompressedLength(stored, out long oldLength)
+                if (!OuterCompression.TryGetZstdDecompressedLength(stored, out long oldLength)
                     || oldLength < 1 || oldLength > maxCompressedPayloadBytes) return false;
                 expandedLength = (int)oldLength;
             }

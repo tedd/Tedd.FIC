@@ -4,7 +4,7 @@
     <PackageId>Tedd.FIC</PackageId>
     <Version>0.1.0</Version>
     <Authors>Tedd Hansen</Authors>
-    <Description>Lossless RGB and RGBA image format with optional Deflate, GZip, Zstandard, Brotli, and EXIF metadata.</Description>
+    <Description>Highly optimized, high-performance lossless RGB and RGBA image format. On a 5,000-image benchmark, FIC Fast used 53x less aggregate encode time and produced 24.6% smaller files than SkiaSharp PNG. In 512x512 synthetic tests, FIC Fast encoded and decoded faster than PNG, often in 0-2 ms. Results vary by image, settings, and hardware. Supports Deflate, GZip, Zstandard, Brotli, and EXIF metadata.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/tedd/Tedd.FIC</PackageProjectUrl>
@@ -16,6 +16,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.8" Condition="'$(TargetFramework)' == 'net10.0'" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
     <None Include="../../README.md" Pack="true" PackagePath="" />
   </ItemGroup>

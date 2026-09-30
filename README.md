@@ -1,6 +1,6 @@
 # Tedd.FIC
 
-[![Build](https://github.com/tedd/Tedd.FIC/actions/workflows/dotnet.yml/badge.svg)](https://github.com/tedd/Tedd.FIC/actions/workflows/dotnet.yml)
+[![Build](https://github.com/tedd/Tedd.FIC/actions/workflows/nuget-publish.yml/badge.svg)](https://github.com/tedd/Tedd.FIC/actions/workflows/nuget-publish.yml)
 [![NuGet](https://img.shields.io/nuget/v/Tedd.FIC.svg)](https://www.nuget.org/packages/Tedd.FIC)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Tedd.FIC.svg)](https://www.nuget.org/packages/Tedd.FIC)
 
